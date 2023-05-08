@@ -1,0 +1,105 @@
+{
+	"DDMU":"DDMU",
+	"DDMM":"DDMM",
+	"pH":"pH",
+	"ORP":"ORP",
+	"RDO":"RDO",
+	"ION":"ION",
+	"ZS":"ZS",
+	"DDM-S":"DDM-S",
+	"COD":"COD",
+	"CL":"CL",
+	"CHLO":"CHLO",
+	"BGA":"BGA",
+	"TPS":"TPS",
+	"TSS":"TSS",
+	"OIL":"OIL",
+	"BOD":"BOD",
+	
+	"singleParameter":"Single Parameter",
+	"multiParameter":"Multi Parameter",
+	
+	"realTime":"Real-time",
+	"cancel":"CANCEL",
+	"successful":"SUCCESSFUL",
+	
+
+	"deviceAddress":"Address",
+	"param":"param",
+	"deviceType":"Type",
+	"disconnected":"Disconnected",
+	"intervalTime":"Interval time",
+	"testTime":"Test time",
+	"value":"value",
+	"Temperation":"Temperation",
+	"noData":"No Data",
+	
+	
+
+	"connectedDevices":"Connected devices",
+	"availableEquipment":"Available equipment",
+	
+	"tabbar_1":"Real-time data",
+	"tabbar_2":"Connection",
+	"tabbar_3":"Setting",
+
+
+	"deviceName":"Device name",
+	"historyData":"History Data",
+	"calibration":"Calibration",
+	"troubleShoot":"Troubleshoot",
+	"language":"Language",
+	"setting":"Setting",
+	
+	"interval_input":"Please enter a new interval",
+	"test_input":"Please enter a new test time",
+	
+
+	"deviceName_input":"Enter a new name",
+	"deviceName_label":"The new name contains 3-18 digits or letters.",
+	"deviceName_button":"CONFIRM",
+	
+
+
+	"historyData_dialog1":"The historical data stored is about ",
+	"historyData_dialog2":",estimated read time:",
+	"historyData_dialog3":"s, read now?",
+	"historyData_dialog4":"Are you sure to download historical data?",
+	"historyData_dialog5":"Are you sure to delete historical data?",
+	"total":"Total",
+	"validTotal":"Valid total",
+	"historyDataDelete":"HISTORY DARA DELETE",
+	"download":"DOWNLOAD",
+	
+
+
+	"calibrationSelection":"calibrationSelection",
+	"address_input":"New device address",
+	"temp":"Temp",
+	"temp_input":"New value",
+	"zero":"Zero",
+	"zero_input":"New value",
+	"slope":"Slope",
+	"slope_input":"New value",
+	"change_button":"CHANGE",
+	"write_button":"WRITE",
+	
+
+
+	"shooting_1":"Try to establish a connection with the device",
+	"shooting_2":"The connection was successful",
+	"shooting_3":"The command was issued successfully",
+	"shooting_4":"Data analysis",
+	"data_connection_normal":"Data communication is normal",
+	"data_connection_fail":"The data communication is not smooth, please check the sensor connection and restart the device",
+	"low_ele":"The battery is too low, please charge it",
+	
+
+
+	"simplifiedChinese":"简体中文",
+	"english":"English",
+	"language_button":"SAVE",
+	"language_dialog":"Language selection successful",
+	"language_dialog_confirm":"EFFECTIVE IMMEDIATELY"
+	
+}

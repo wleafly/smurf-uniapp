@@ -1,0 +1,15 @@
+{
+    "id": "Electric-quantity",
+    "name": "电量百分比显示",
+    "version": "0.01",
+    "description": "电池电量百分比显示",
+    "keywords": [
+        "电池，百分比"
+    ],
+    "dcloudext": {
+        "category": [
+            "前端组件",
+            "通用组件"
+        ]
+    }
+}

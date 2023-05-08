@@ -1,0 +1,95 @@
+{
+	"easycom": {
+		"^u-(.*)": "@/uni_modules/uview-ui/components/u-$1/u-$1.vue"
+	},
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "实时数据"
+			}
+		},
+		{
+			"path": "pages/wifi/wifi",
+			"style": {
+				"navigationBarTitleText": "可选设备",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/setting/setting",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/setting/timeCalibration",
+			"style": {
+				"navigationBarTitleText": "时间校准"
+			}
+		},
+		{
+			"path": "pages/setting/calibration",
+			"style": {
+				"navigationBarTitleText": "数据校准"
+			}
+		},
+		{
+			"path": "pages/setting/deviceName",
+			"style": {
+				"navigationBarTitleText": "设备名称"
+			}
+		},
+		{
+			"path": "pages/setting/historyData",
+			"style": {
+				"navigationBarTitleText": "历史数据"
+			}
+		},
+		{
+			"path": "pages/setting/language",
+			"style": {
+				"navigationBarTitleText": "语言选项"
+			}
+		},
+		{
+			"path": "pages/setting/set",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/setting/troubleshooting",
+			"style": {
+				"navigationBarTitleText": "故障排查"
+			}
+		}
+	],
+
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "uni-app",
+		"backgroundColor": "#F8F8F8",
+		"navigationBarBackgroundColor": "#89b7ec"
+	},
+	"tabBar": {
+		// "custom": true,
+		"list" : [{
+			"pagePath": "pages/index/index",
+			"text": "实时数据",
+			"iconPath": "static/realTimeData.png",
+			"selectedIconPath": "static/realTimeData.png"
+		},{
+			"pagePath": "pages/wifi/wifi",
+			"text": "连接管理",
+			"iconPath": "static/wifi.png",
+			"selectedIconPath": "static/wifi.png"
+		},{
+			"pagePath": "pages/setting/setting",
+			"text": "设置",
+			"iconPath": "static/setting.png",
+			"selectedIconPath": "static/setting.png"
+		}]
+	},
+	"uniIdRouter": {}
+}

@@ -1,0 +1,107 @@
+{
+	"DDMU":"电导率",
+	"DDMM":"电导率",
+	"pH":"pH",
+	"ORP":"ORP",
+	"RDO":"溶解氧",
+	"ION":"铵氮/离子类",
+	"ZS":"浊度",
+	"DDM-S":"盐度",
+	"COD":"COD",
+	"CL":"余氯",
+	"CHLO":"叶绿素",
+	"BGA":"蓝绿藻",
+	"TPS":"透明度",
+	"TSS":"悬浮物",
+	"OIL":"水中油",
+	"BOD":"BOD",
+	"COD_ZS":"COD内置浊度",
+	
+	"singleParameter":"单参数",
+	"multiParameter":"多参数",
+	
+	
+	"realTime":"实时数据",
+	"cancel":"退出",
+	"successful":"修改成功",
+	
+
+
+	"deviceAddress":"设备地址",
+	"param":"单/多参数",
+	"deviceType":"设备类型",
+	"disconnected":"设备未连接",
+	"intervalTime":"间隔时间",
+	"testTime":"测试时间",
+	"value":"参数值",
+	"Temperation":"温度",
+	"noData":"数据未获取",
+	
+
+
+	"connectedDevices":"已连接的设备",
+	"availableEquipment":"可用设备",
+	
+	"tabbar_1":"实时数据",
+	"tabbar_2":"连接管理",
+	"tabbar_3":"设置",
+	
+
+
+	"deviceName":"设备名称",
+	"historyData":"历史数据",
+	"calibration":"校准功能",
+	"troubleShoot":"故障排查",
+	"language":"语言选项",
+	"setting":"系统设置",
+	
+	"interval_input":"请输入新的间隔时间",
+	"test_input":"请输入新的测试时间",
+
+
+	"deviceName_input":"这里输入新的设备名称",
+	"deviceName_label":"新名称包含3-18个数字或字母",
+	"deviceName_button":"确认修改",
+	
+
+
+	"historyData_dialog1":"存储的历史数据约有",
+	"historyData_dialog2":"条，预计读取花费时间：",
+	"historyData_dialog3":"秒，是否现在读取？",
+	"historyData_dialog4":"确认删除历史数据吗？",
+	"historyData_dialog5":"确认下载历史数据吗？",
+	"total":"总数据条数",
+	"validTotal":"属性数据条数",
+	"historyDataDelete":"历史数据清除",
+	"download":"历史数据下载",
+	
+
+	"calibrationSelection":"校准选择",
+	"address_input":"新的设备地址",
+	"temp":"温度校准",
+	"temp_input":"需要校准的温度值",
+	"zero":"零点校准",
+	"zero_input":"零点校准数值",
+	"slope":"斜率校准",
+	"slope_input":"斜率校准数值",
+	"change_button":"更改",
+	"write_button":"写入",
+	
+
+
+	"shooting_1":"尝试与设备建立连接",
+	"shooting_2":"连接成功",
+	"shooting_3":"指令下发成功",
+	"shooting_4":"数据分析",
+	"data_connection_normal":"数据通信正常",
+	"data_connection_fail":"数据通信不通畅，请检查传感器连接，并重启设备",
+	"low_ele":"电池电量过低，请充电",
+	
+
+
+	"simplifiedChinese":"简体中文",
+	"english":"English",
+	"language_button":"保存",
+	"language_dialog":"语言设置成功",
+	"language_dialog_confirm":"立即重启"
+}
