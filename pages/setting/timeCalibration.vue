@@ -59,14 +59,11 @@
 			send(msg){
 				
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {
-					return parseInt(h, 16)
-					}))
+					return parseInt(h, 16)}))
 				var buffer = typedArray.buffer
 				
 				let that = this
-				console.log('deviceId是',this.deviceId)
-				console.log('serviceId是',this.serviceId)
-				console.log('characteristicId是',this.writeCharacteristicId)
+
 				
 				uni.writeBLECharacteristicValue({
 					deviceId:this.deviceId,

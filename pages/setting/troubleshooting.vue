@@ -1,8 +1,8 @@
 <template>
 	<view>
-		<view class="gif">
+		<!-- <view class="gif">
 			<image src="../../static/loading_gif.gif"></image>
-		</view>
+		</view> -->
 		
 		<u-loading-icon mode="semicircle" text="半圆"></u-loading-icon>
 		<view>

@@ -2,28 +2,41 @@
 	<view class="outer">
 		<!-- web下背景无效 -->
 		<image class="bg-img" src="/static/background.jpg"></image> 
+		<!-- 修改时间的弹窗 -->
+		<uni-popup ref="popup" type="dialog">
+			<view class="alter_time_view">
+				<view style="margin-top: 20rpx;color: gray;">时间校准</view>
+				<input type="text" v-model:value="interval_input" placeholder="请输入间隔时间" class="input_style"
+					style="margin-top: 20rpx;" />
+				<input type="text" v-model:value="testTime_input" placeholder="请输入测试时间" class="input_style"
+					style="margin: 20rpx;" />
+				<view class="btn_group">
+					<view style="border-right: 1rpx solid #eee;width: 50%;text-align: center;" @click="close_popup()">取消
+					</view>
+					<view style="width: 50%;text-align: center;color: #007AFF" @click="confirm_alter_time()">确定</view>
+				</view>
+			</view>
+		</uni-popup>
 		
 		<view style="display: flex;flex-direction: row;align-items: center;">
-			<view class="head">{{deviceArr.length>1?'多设备':(deviceArr.length==1?paramArr[deviceArr[0].param]:'未连接')}}</view>
+			<view class="head">{{deviceArr.length>1?'多设备':(deviceArr.length==1?(deviceArr[0].type==1?'多参数':paramArr[deviceArr[0].param]):'未连接')}}</view>
 			<view>
-				<text style="text-align: center;font-size: 40rpx;color: #646464;font-weight: 600;text-shadow: 2px 3px 2px #eee;">{{deviceName}}</text>
-				<view class="flex_row_between" style="margin-top: 25rpx;justify-content: center;align-items: center;">
-					<view class="battery" style="display: inline-block;">
-						<view style="z-index: 1;position: relative;">{{eq}}</view>
-						<view :style="{'width': eq+'%','background-color': batteryColor}" style="z-index: 0;position: relative;bottom:50rpx;height: 100%;border-radius: 10rpx;"></view>
-					</view>
-					<view style="background-color: white;width: 10rpx;height: 30rpx;border-top-right-radius: 10rpx;border-bottom-right-radius: 10rpx;"></view>
-				</view>
+				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #737373;">deviceName</text>
 				
+				<view @click="sendF900()" style="background-color: #55ff7f;color: white;font-weight: bold;padding: 15rpx;border-radius: 10rpx;width: 200rpx;text-align: center;">开始接收数据</view>
 			</view>
-			<!-- <button @click="test">测试</button> -->
-		
+			<view class="flex_row_between" style="margin-top: 25rpx;justify-content: center;align-items: center;">
+				<view class="battery" style="display: inline-block;">
+					<view style="z-index: 1;position: relative;">{{eq}}</view>
+					<view :style="{'width': eq+'%','background-color': batteryColor}" style="z-index: 0;position: relative;bottom:50rpx;height: 100%;border-radius: 10rpx;"></view>
+				</view>
+				<view style="background-color: white;width: 10rpx;height: 30rpx;border-top-right-radius: 10rpx;border-bottom-right-radius: 10rpx;"></view>
+			</view>
 		</view>
 		<view class="element_style flex_row_between" style="margin: 15rpx;">
-			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">间隔时间:{{valueArr[0]?valueArr[0].interval:''}}min</view>
-			<view class="time_style" @click="toAlterTime()">测试时间:{{valueArr[0]?valueArr[0].testTime:''}}min</view>
+			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">间隔时间{{valueArr[index_with_time]?': '+valueArr[index_with_time].interval+'min':''}}</view>
+			<view class="time_style" @click="toAlterTime()">测试时间{{valueArr[index_with_time]?': '+valueArr[index_with_time].testTime+'min':''}}</view>
 		</view>
-		
 		
 		<view v-if="deviceArr[0]">
 			<view v-if="deviceArr[0].type!=1">
@@ -62,20 +75,27 @@
 			<view v-else>
 				<view class="element_style" style="margin: 15rpx;padding: 20rpx 10rpx;">
 					<view class="row" style="margin-bottom: 20rpx;">
-						<view class="item">参数1<br>{{valueArr[valueArr.length-1].val1}}</view>
-						<view class="item">参数2<br>{{valueArr[valueArr.length-1].val2}}</view>
-						<view class="item">参数3<br>{{valueArr[valueArr.length-1].val3}}</view>
-						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx">参数4<br>{{valueArr[valueArr.length-1].val4}}</view>
+						<view class="item">化学需氧量(COD)<br>{{valueArr.length?valueArr[valueArr.length-1].val1:''}}</view>
+						<view class="item">浊度(COD)<br>{{valueArr.length?valueArr[valueArr.length-1].val2:''}}</view>
+						<view class="item">电导率/盐度<br>{{valueArr.length?valueArr[valueArr.length-1].val3:''}}</view>
+						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx;font-size: 25rpx;">PH<br>{{valueArr.length?valueArr[valueArr.length-1].val4:''}}</view>
 					</view>
 					<view class="row">
-						<view class="item">参数5<br>{{valueArr[valueArr.length-1].val5}}</view>
-						<view class="item">参数6<br>{{valueArr[valueArr.length-1].val6}}</view>
-						<view class="item">参数7<br>{{valueArr[valueArr.length-1].val7}}</view>
-						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx">参数8<br>{{valueArr[valueArr.length-1].val8}}</view>
+						<view class="item">ORP<br>{{valueArr.length?valueArr[valueArr.length-1].val5:''}}</view>
+						<view class="item">溶解氧<br>{{valueArr.length?valueArr[valueArr.length-1].val6:''}}</view>
+						<view class="item">铵氮/离子类<br>{{valueArr.length?valueArr[valueArr.length-1].val7:''}}</view>
+						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx;font-size: 25rpx;">浊度<br>{{valueArr.length?valueArr[valueArr.length-1].val8:''}}</view>
 					</view>
 				</view>
 			</view>
 				
+		</view>
+		<!-- 未连接设备时显示 -->
+		<view v-else class="remind_connect">
+			<icon type="info" size="50" color="#acacac"></icon>
+			
+			<view style="margin-top: 15rpx;">请连接设备</view>
+			
 		</view>
 		
 
@@ -87,6 +107,9 @@
 	export default {
 		data() {
 			return{
+				testTime_input: '',
+				interval_input: '',
+				index_with_time: 0,//valueArr中包含间隔和测试时间的索引
 				deviceName:'',
 				lightOptions:[0,0,0,0],//高亮选项，选中哪个就显示哪个图表，0是参数，1温度，2浊度，3BOD,默认显示参数
 				chartDisplay:[true,false,false,false],//可以扩展，在后面追加false即可.目前新设备只能接4个传感器
@@ -181,7 +204,94 @@
 			clearInterval(this.timer) //清除更新图表的定时器
 		},
 		methods:{
-			test(){
+			open_alter_time_popup() {
+				this.$refs.popup.open()
+			},
+			/**
+			 * 点击取消按钮触发
+			 * @param {Object} done
+			 */
+			close_popup() {
+				// TODO 做一些其他的事情，before-close 为true的情况下，手动执行 close 才会关闭对话框
+				// ...
+				this.$refs.popup.close()
+			},
+			/**
+			 * 点击确认按钮触发
+			 * @param {Object} done
+			 * @param {Object} value
+			 */
+			confirm_alter_time() {
+				// 输入框的值
+				let interval = parseInt(this.interval_input)
+				let testTime = parseInt(this.testTime_input)
+				if (interval && testTime) {
+					if (interval < 256 && interval >= 1 && testTime < 256 && testTime >= 1) { // 执行修改时间的指令
+						//将时间转为FC xx xx的十六进制格式
+						let intervals_hex = interval.toString(16)
+						if(intervals_hex.length<2){
+							intervals_hex = '0'+intervals_hex
+						}
+						let testTime_hex = testTime.toString(16)
+						if(testTime_hex.length<2){
+							testTime_hex = '0'+testTime_hex
+						}
+						let msg = 'FC'+intervals_hex+testTime_hex
+						
+						var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {
+							return parseInt(h, 16)}))
+						var buffer = typedArray.buffer
+						// console.log(msg)
+						uni.showLoading({
+							title:'加载中'
+						})
+						let count = 0
+						let alter_success = false //时间更改成功的标志
+						setTimeout(()=>{
+							uni.hideLoading() //超时关闭加载
+							if(!alter_success){
+								uni.showToast({
+									title:"更改失败，请重新发送",
+									icon:"none"
+								})
+							}
+						},10000)
+						getApp().writeValueToBle(msg,str=>{
+							if(count<this.deviceArr.length*2){
+								if(str.search("OK")!=-1){  //返回的数据带有[OK],表明时间修改成功
+									uni.hideLoading()  //主动关闭加载
+									uni.showToast({
+										title:"修改成功",
+										icon:"none"
+									})
+									getApp().globalData.isFirstData = true //时间修改成功后的第一条数据是带时间的
+									this.index_with_time = this.valueArr.length
+									alter_success = true
+								}
+								count++
+							}
+							//正常读取数据
+							getApp().handleStrFromBlueTooth(str)
+							
+						})
+
+						// 执行 close 才会关闭对话框
+						this.$refs.popup.close()
+					} else {
+						uni.showToast({
+							title: "请输入1~255之间的整数",
+							icon: 'none'
+						})
+					}
+				} else {
+					uni.showToast({
+						title: "请输入1~255之间的整数",
+						icon: 'none'
+					})
+				}
+
+			},
+			test(){ 
 				setTimeout(()=>{
 						getApp().globalData.deviceArr.push({address:3,type:0,param:9})
 				},1500)
@@ -300,9 +410,10 @@
 			},
 			//跳转到时间校准页面
 			toAlterTime(){
-				uni.navigateTo({
-					url:'/pages/setting/timeCalibration'
-				})
+				// uni.navigateTo({
+				// 	url:'/pages/setting/timeCalibration'
+				// })
+				this.open_alter_time_popup()
 			}
 			
 		},
@@ -342,7 +453,7 @@
 		justify-content: space-around;
 		align-items: center;
 		.item{
-			border-right: 1rpx solid gray;width: 25%;text-align: center;line-height: 60rpx;padding:0rpx 30rpx
+			border-right: 1rpx solid gray;width: 25%;text-align: center;line-height: 60rpx;padding:0rpx 30rpx;font-size: 25rpx;
 		}
 	}
 	.head{
@@ -377,5 +488,40 @@
 	    top: 0;
 	    left: 0;
 	    z-index: -1;
+	}
+	.input_style {
+		border: 1rpx solid #eee;
+		border-radius: 10rpx;
+		padding: 15rpx;
+		width: 85%;
+	}
+	
+	.alter_time_view {
+		background-color: white;
+		width: 500rpx;
+		border-radius: 20rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	
+	.btn_group {
+		width: 100%;
+		display: flex;
+		padding: 20rpx 0;
+		border-bottom-left-radius: 20rpx;
+		border-bottom-right-radius: 20rpx;
+		border-top: 1rpx solid #eee;
+	}
+	.remind_connect{
+		height: 800rpx;
+		color: #acacac;
+		font-size: 40rpx;
+		font-weight: bold;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		
 	}
 </style>
