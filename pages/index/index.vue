@@ -21,21 +21,20 @@
 		<view style="display: flex;flex-direction: row;align-items: center;">
 			<view class="head">{{deviceArr.length>1?'多设备':(deviceArr.length==1?(deviceArr[0].type==1?'多参数':paramArr[deviceArr[0].param]):'未连接')}}</view>
 			<view>
-				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #737373;">deviceName</text>
-				
-				<view @click="sendF900()" style="background-color: #55ff7f;color: white;font-weight: bold;padding: 15rpx;border-radius: 10rpx;width: 200rpx;text-align: center;">开始接收数据</view>
-			</view>
-			<view class="flex_row_between" style="margin-top: 25rpx;justify-content: center;align-items: center;">
-				<view class="battery" style="display: inline-block;">
-					<view style="z-index: 1;position: relative;">{{eq}}</view>
-					<view :style="{'width': eq+'%','background-color': batteryColor}" style="z-index: 0;position: relative;bottom:50rpx;height: 100%;border-radius: 10rpx;"></view>
+				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #a8a8a8;">{{deviceName}}</text>
+				<view class="flex_row_between" style="margin-top: 25rpx;justify-content: center;align-items: center;">
+					<view class="battery" style="display: inline-block;">
+						<view style="z-index: 1;position: relative;">{{eq}}</view>
+						<view :style="{'width': eq+'%','background-color': batteryColor}" style="z-index: 0;position: relative;bottom:50rpx;height: 100%;border-radius: 10rpx;"></view>
+					</view>
+					<view style="background-color: white;width: 10rpx;height: 30rpx;border-top-right-radius: 10rpx;border-bottom-right-radius: 10rpx;"></view>
 				</view>
-				<view style="background-color: white;width: 10rpx;height: 30rpx;border-top-right-radius: 10rpx;border-bottom-right-radius: 10rpx;"></view>
 			</view>
+
 		</view>
 		<view class="element_style flex_row_between" style="margin: 15rpx;">
-			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">间隔时间{{valueArr[index_with_time]?': '+valueArr[index_with_time].interval+'min':''}}</view>
-			<view class="time_style" @click="toAlterTime()">测试时间{{valueArr[index_with_time]?': '+valueArr[index_with_time].testTime+'min':''}}</view>
+			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">间隔时间{{valueArr[index_with_time]?(valueArr[index_with_time].interval?': '+valueArr[index_with_time].interval+'min':''):''}}</view>
+			<view class="time_style" @click="toAlterTime()">测试时间{{valueArr[index_with_time]?(valueArr[index_with_time].testTime?': '+valueArr[index_with_time].testTime+'min':''):''}}</view>
 		</view>
 		
 		<view v-if="deviceArr[0]">
@@ -91,11 +90,15 @@
 				
 		</view>
 		<!-- 未连接设备时显示 -->
-		<view v-else class="remind_connect">
+<!-- 		<view v-else class="remind_connect">
 			<icon type="info" size="50" color="#acacac"></icon>
 			
 			<view style="margin-top: 15rpx;">请连接设备</view>
 			
+		</view> -->
+		
+		<view v-if="showLoading" class="remind_connect">
+			<loading txt="正在获取数据"></loading>
 		</view>
 		
 
@@ -132,14 +135,34 @@
 					xAxis: {
 					  itemCount: 8
 					}
-				}
+				},
+				
+				showLoading:false
 			}
 		},
 		onLoad() {
-
+			
 		},
 
 		onShow() {
+			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
+				this.index_with_time = 0
+				this.showLoading = true
+				console.log("首页发送f900")
+				getApp().writeValueToBle('F900',getApp().handleStrFromBlueTooth)
+				getApp().globalData.firstLoading = false //再次点进来时，就不再重发f900
+				setTimeout(()=>{
+					this.showLoading = false
+					if(this.deviceArr.length==0){
+						uni.showToast({
+							icon:"none",
+							title:"数据获取失败"
+						})
+						getApp().globalData.firstLoading = true //下次进入时，会重发f900
+					}
+				},30000) //30秒加载不到数据就自动关闭动画
+			}
+			
 			this.deviceName = getApp().globalData.deviceName //app.vue中应为""
 			this.deviceArr = getApp().globalData.deviceArr //app.vue中应为[]
 			this.valueArr = getApp().globalData.valueArr //app.vue中应为[]
@@ -200,6 +223,10 @@
 
 		},
 		
+		onReady() {  //onShow方法中showLoading无效,但是onReady只执行一次
+
+
+		},
 		onHide() {
 			clearInterval(this.timer) //清除更新图表的定时器
 		},
@@ -243,10 +270,9 @@
 						var buffer = typedArray.buffer
 						// console.log(msg)
 						uni.showLoading({
-							title:'加载中'
+							title:'更改中'
 						})
-						let count = 0
-						let alter_success = false //时间更改成功的标志
+						
 						setTimeout(()=>{
 							uni.hideLoading() //超时关闭加载
 							if(!alter_success){
@@ -256,9 +282,12 @@
 								})
 							}
 						},10000)
+						let count = 0
+						let alter_success = false //时间更改成功的标志
 						getApp().writeValueToBle(msg,str=>{
 							if(count<this.deviceArr.length*2){
-								if(str.search("OK")!=-1){  //返回的数据带有[OK],表明时间修改成功
+								if(str.search("[OK]")!=-1){  //返回的数据带有[OK],表明时间修改成功
+									console.log("判断返回的数据是否带有[OK]")
 									uni.hideLoading()  //主动关闭加载
 									uni.showToast({
 										title:"修改成功",
@@ -267,6 +296,10 @@
 									getApp().globalData.isFirstData = true //时间修改成功后的第一条数据是带时间的
 									this.index_with_time = this.valueArr.length
 									alter_success = true
+									
+									if(!getApp().globalData.isNewDevice){ //老设备在f900状态修改了时间，返回【OK】后会停止发数据,要重新发f900
+										getApp().writeValueToBle('F900',getApp().handleStrFromBlueTooth)
+									}
 								}
 								count++
 							}
@@ -420,6 +453,9 @@
 		
 		watch:{
 			deviceArr(){ //监听到deviceArr发生变化后，要重构图表列表
+				if(this.deviceArr.length){
+					this.showLoading = false //事实上只需要执行一次就够了，反正deviceArr也就几条
+				}
 				this.setChart()
 			}
 		}

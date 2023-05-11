@@ -18,12 +18,13 @@
 			deviceName:"", //蓝精灵的名字
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
-			deviceCoreData:{} ,//存蓝牙设备的核心数据，设备id、服务id、读写id等
+			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
 			tempStr:"", //临时数据，存储不完整的蓝牙数据
 			isFirstData:true,
 			isNewDevice:false,
 			oldParamId:null,
 			addressToParamMap:[],
+			firstLoading:true,//代表进入数据页是否要发f900
 		},
 		methods:{
 			// ArrayBuffer转16进制字符串
@@ -53,7 +54,7 @@
 			    }
 			    return resultStr.join("");
 			},
-			writeValueToBle(msg,handleStr,fail){
+			writeValueToBle(msg,handleStr,failOperation){
 				
 				// let msg = 'F900'
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
@@ -63,7 +64,8 @@
 					characteristicId:getApp().globalData.deviceCoreData.writeCharacteristicId,
 					value:typedArray.buffer,
 					success(res) {
-						console.log("数据发送成功")
+						console.log(msg+"数据发送成功")
+						
 						uni.onBLECharacteristicValueChange(res => {
 							let resHex = getApp().ab2hex(res.value)
 							let result = getApp().hexCharCodeToStr(resHex)
@@ -71,40 +73,59 @@
 							handleStr(result)  //外部传入的方法，对接收到的字符串做处理
 						
 						}) 
+						
+						
 					},
 					fail(err) {
-						fail()
+						failOperation()
 						uni.showToast({icon:'none',title: msg+"发送失败"})
 						console.log("数据发送失败",err)
 					}
 				})
 			},
 			handleStrFromBlueTooth(result){
-				console.log("处理前的数据",result)
+				console.log("收到数据:"+result)
 				if(result.charAt(0)=='[' && result.search(",")!=-1){ //[6,0,6,]格式的设备类型
 					result = result.slice(1,result.length-1)
 					let resultArr = result.split(',')
-					console.log('完整的头数据',resultArr)
+					console.log('f900头数据',resultArr)
 					//把传感器类型信息记录到全局变量deviceArr
-					getApp().globalData.deviceArr.push({
+					let device = {
 						address:parseInt(resultArr[0]),
 						type:parseInt(resultArr[1]),
 						param:parseInt(resultArr[2]),
-					})
-					//在数组中添加地址和参数id的映射关系
-					getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2])
-					getApp().globalData.oldParamId = parseInt(resultArr[2]) //存下当前的参数类型，若是老设备，接收的值不带地址，可以利用这个变量
+					}
+					//地址不同时才能push新设备，同时防止重复元素
+					if(getApp().globalData.deviceArr.findIndex((item)=>{return item.address==device.address})==-1){
+						getApp().globalData.deviceArr.push(device)
+						//在数组中添加地址和参数id的映射关系
+						getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2])
+						getApp().globalData.oldParamId = parseInt(resultArr[2]) //存下当前的参数类型，若是老设备，接收的值不带地址，可以利用这个变量
+					}
+				
+					// let deviceStr = JSON.stringify(device)
+					// for(var i =0;i< getApp().globalData.deviceArr.length;i++){
+					// 	if(deviceStr != JSON.stringify(item)){
+					// 		i++
+					// 	}
+					// }
+					// if(i==getApp().globalData.deviceArr.length){  //只添加不重复的device
+						
+					// }
+					
+
 				}else if(result.charAt(result.length-1)!='}'){ //数据过长，对数据进行拼接
 					getApp().globalData.tempStr = result //前半截数据
 				}else if(result.charAt(0)!='{' && result.search("}")!=-1){ //第一位不是'{',且含有'}',说明是长数据的后半截
 					if(result.endsWith("}[OK]") || result.endsWith("}[Error]")){ //f900后fc可能会出现的情况
+						console.log("接收到了后半截数据带[OK]或[Error]的情况")
 						result = result.split("[")[0]
 					}
 
 					getApp().globalData.tempStr = getApp().globalData.tempStr + result
 					getApp().globalData.tempStr = getApp().globalData.tempStr.slice(1,getApp().globalData.tempStr.length-2).split(',') //silce是左闭右开，length-2可以移除掉最后面的,}
 			
-					console.log("完整的值数据:",getApp().globalData.tempStr)
+					console.log("处理后的数据:",getApp().globalData.tempStr)
 					
 					if(getApp().globalData.deviceArr.length>0){
 						this.judgeNewOrOld()
@@ -113,7 +134,7 @@
 				}else{ //由于较短，可单行获取的完整数据
 			
 					getApp().globalData.tempStr = result.slice(1,result.length-2).split(',')
-					console.log("完整的值数据：",getApp().globalData.tempStr)
+					console.log("处理后的数据：",getApp().globalData.tempStr)
 					if(getApp().globalData.deviceArr.length>0){
 						this.judgeNewOrOld()
 						this.storageValue(getApp().globalData.tempStr.map(Number))
