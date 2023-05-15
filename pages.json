@@ -24,12 +24,6 @@
 			}
 		},
 		{
-			"path": "pages/setting/timeCalibration",
-			"style": {
-				"navigationBarTitleText": "时间校准"
-			}
-		},
-		{
 			"path": "pages/setting/calibration",
 			"style": {
 				"navigationBarTitleText": "数据校准"

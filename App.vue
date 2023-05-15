@@ -16,7 +16,23 @@
 		},
 		globalData:{
 			deviceName:"", //蓝精灵的名字
-			deviceArr:[], //存传感器的类型
+			deviceArr:[
+				// {
+				// 	address:3,
+				// 	type:0,//单参数
+				// 	param:9 
+				// },
+				// {
+				// 	address:6,
+				// 	type:0,
+				// 	param:6
+				// },
+				// {
+				// 	address:16,
+				// 	type:0,
+				// 	param:4 
+				// }
+			], //存传感器的类型
 			valueArr:[], //存传感器的数据
 			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
 			tempStr:"", //临时数据，存储不完整的蓝牙数据
@@ -55,7 +71,6 @@
 			    return resultStr.join("");
 			},
 			writeValueToBle(msg,handleStr,failOperation){
-				
 				// let msg = 'F900'
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
 				uni.writeBLECharacteristicValue({
@@ -77,8 +92,34 @@
 						
 					},
 					fail(err) {
-						failOperation()
+						if(failOperation){ //有方法传入再执行
+							failOperation()
+						}
+						
 						uni.showToast({icon:'none',title: msg+"发送失败"})
+						console.log("数据发送失败",err)
+					}
+				})
+			},
+			writeBufferToBle(buffer,handleStr,failOperation){
+				uni.writeBLECharacteristicValue({
+					deviceId:getApp().globalData.deviceCoreData.deviceId,
+					serviceId:getApp().globalData.deviceCoreData.serviceId,
+					characteristicId:getApp().globalData.deviceCoreData.writeCharacteristicId,
+					value:buffer,
+					success(res) {
+						console.log("buffer发送成功")
+						
+						uni.onBLECharacteristicValueChange(res => {
+							let resHex = getApp().ab2hex(res.value)
+							let result = getApp().hexCharCodeToStr(resHex)
+							result = String(result)
+							handleStr(result)  //外部传入的方法，对接收到的字符串做处理
+						
+						}) 
+					},
+					fail(err) {
+						uni.showToast({icon:'none',title: "发送失败"})
 						console.log("数据发送失败",err)
 					}
 				})

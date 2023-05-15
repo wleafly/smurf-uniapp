@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<view>setting</view>
+		<view>未实现</view>
 	</view>
 </template>
 

@@ -3,14 +3,14 @@
 		<u-cell-group>
 			<u-cell
 			    :title="i18n('simplifiedChinese')"
-				clickable="true"
+				:clickable="true"
 				size="large"
 				@click="choose(1)"
 				icon="/static/zh.png"
 			></u-cell>
 			<u-cell
 			    :title="i18n('english')"
-				clickable="true"
+				:clickable="true"
 				@click="choose(2)"
 				size="large"
 				icon="/static/en.png"

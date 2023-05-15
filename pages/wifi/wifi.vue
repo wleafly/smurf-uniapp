@@ -70,20 +70,20 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				uni.stopPullDownRefresh() //关闭动画
 				let deviceId = this.blueToothList[index].deviceId
 				let that = this
-				if(this.blueToothStateArr[index]==0){
+				if(this.blueToothStateArr[index]==0){ //点击了连接
 					this.$set(this.blueToothStateArr,index,1) //状态改为正在连接
 					this.createBLEConnection(index,deviceId)
-				}else if(this.blueToothStateArr[index]==2){
+				}else if(this.blueToothStateArr[index]==2){ //点击了断开
 					//关闭与对应蓝牙设备的连接
 					this.$set(that.blueToothStateArr,index,0)
-					uni.closeBLEConnection({
+					uni.closeBLEConnection({ 
 					  deviceId,
 					  success(res) {
 					    console.log("关闭蓝牙连接",res)
 					  }
 					})
-					getApp().globalData.isFirstData = true //重新连接后，要从第一条开始算了
-					getApp().globalData.firstLoading = true
+					getApp().globalData.isFirstData = true //重新连接后，数据页要从第一条记录开始算了
+					getApp().globalData.firstLoading = true //重新连接后，数据页要发f900了，把firstLoading 设置为 true才行 
 				}
 				
 			
@@ -92,7 +92,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				this.connectNum++
 				if(this.connectNum>5){ //失败5次以上将按钮状态改为未连接时的文字
 					this.$set(this.blueToothStateArr,index,0)
-					uni.showToast({icon:'none',title: "蓝牙连接失败"})
+					uni.showToast({icon:'none',title: "蓝牙连接失败，请手动重连"})
 					this.connectNum = 0
 					return
 				}
@@ -202,7 +202,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						// that.getServices()
 					},
 					fail(res) {
-						// uni.showToast({icon:'none',title: "蓝牙连接失败"})
+						uni.showToast({icon:'none',title: "连接失败,尝试第"+that.connectNum+"次重连"})
 						console.log("蓝牙连接第"+that.connectNum+"次失败",res)
 
 						setTimeout(()=>{
@@ -266,10 +266,14 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				let that = this
 				uni.onBLEConnectionStateChange((res) => {
 					if(res.connected == false){
+						// console.log(`当前断开的设备：${res.deviceId}`)
+						// console.log(`当前deviceCoreData存的设备：${getApp().deviceCoreData.deviceId}`)
+						// if(res.deviceId == getApp().deviceCoreData.deviceId){
+						// 	console.log("判断成功")
+						// }
 						uni.showToast({icon:'none',title: "设备连接断开"})
 						getApp().globalData.firstLoading = true
 						that.$set(that.blueToothStateArr,that.usedDeviceIndex,0)
-						
 					}
 				})
 			},
