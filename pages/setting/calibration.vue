@@ -8,7 +8,7 @@
 			</view>
 			<view class="line" style="margin-top: 40rpx;"></view>
 			<view class="row" style="margin: 25rpx;">
-				<text style="width: 240rpx;">{{$t('temp')}}</text>
+				<text style="width: 170rpx;">{{$t('temp')}}</text>
 				<input :placeholder="i18n('temp_input')" v-model="temp_calibration" class="input">
 				<button class="btn_write" @click="temp_modify">{{$t('write_button')}}</button>
 			</view>
@@ -132,22 +132,22 @@
 			}
 		},
 		onShow(){
-			let that = this
-			this.deviceId=getApp().globalData.deviceCoreData.deviceId
-			this.serviceId=getApp().globalData.deviceCoreData.serviceId
-			this.notifyCharacteristicId=getApp().globalData.deviceCoreData.notifyCharacteristicId
-			this.writeCharacteristicId=getApp().globalData.deviceCoreData.writeCharacteristicId
-			uni.getStorage({
-				key:'device',
-				success(res) {
-					that.deviceAddress = res.data.deviceAddress
-					that.typeId = res.data.typeId
-					that.param = res.data.param
-					// console.log(that.typeId)
-				},fail(err) {
+			// let that = this
+			// this.deviceId=getApp().globalData.deviceCoreData.deviceId
+			// this.serviceId=getApp().globalData.deviceCoreData.serviceId
+			// this.notifyCharacteristicId=getApp().globalData.deviceCoreData.notifyCharacteristicId
+			// this.writeCharacteristicId=getApp().globalData.deviceCoreData.writeCharacteristicId
+			// uni.getStorage({
+			// 	key:'device',
+			// 	success(res) {
+			// 		that.deviceAddress = res.data.deviceAddress
+			// 		that.typeId = res.data.typeId
+			// 		that.param = res.data.param
+			// 		// console.log(that.typeId)
+			// 	},fail(err) {
 					
-				}
-			})
+			// 	}
+			// })
 		},
 		methods: {
 			//为控件的属性动态绑定内容
@@ -469,7 +469,7 @@
 	}
 	
 	.input{
-		width: 70%;
+		width: 50%;
 		background-color: #ffffff;
 	}
 	
@@ -496,9 +496,9 @@
 	}
 	
 	.btn_write{
-		width: 200rpx;
+/* 		width: 200rpx;
 		height: 60rpx;
-		margin-bottom: 30rpx;
+		margin-bottom: 30rpx; */
 	}
 	
 	.line{

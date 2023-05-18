@@ -5,12 +5,12 @@
 			<view style="font-size: 35rpx;">参数概况</view>
 			<view style="display: flex;flex-wrap: wrap;">
 				<view v-for="paramId in includeParamArr" style="width: 25%;padding: 20rpx 0;" @click="selectParam(paramId)">
-					<view :style="selectOption==paramId?'color:#89B7EC':''" style="font-size: 35rpx;">{{paramArr[paramId]}}</view>
-					<view style="font-size: 20rpx;color: gray;">条数:{{valueArr.filter(value=>{return value[1]==paramId}).length}}</view>
+					<view :style="selectOption==paramId?'color:#89B7EC;font-weight: bold':''" style="font-size: 35rpx;">{{paramArr[paramId]}}</view>
+					<view style="font-size: 20rpx;color: gray;">条数:{{normalValueArr.filter(value=>{return value[1]==paramId}).length}}</view>
 				</view>
 				<!-- 多参数单独处理 -->
 				<view v-if="manyParamValueArr.length" style="width: 25%;padding: 20rpx 0;" @click="selectParam(0)"> 
-					<view style="font-size: 35rpx;" :style="selectOption==0?'color:#89B7EC':''">多参数</view>
+					<view style="font-size: 35rpx;" :style="selectOption==0?'color:#89B7EC;font-weight: bold':''">多参数</view>
 					<!-- 条数0可以隐藏 -->
 					<view style="font-size: 20rpx;color: gray;">条数:{{manyParamValueArr.length}}</view>
 				</view>
@@ -24,7 +24,7 @@
 					可选参数
 				</view>
 				<view style="display: flex;flex-wrap: wrap;width: 80%;">
-					<view v-for="option,index in optionalParams" style="width: 30%;padding: 5rpx;min-height: 50rpx;margin-bottom: 5rpx;">
+					<view v-for="option,index in optionalParams" style="width: 30%;padding: 5rpx;min-height: 50rpx;margin-bottom: 5rpx;font-size: 25rpx;">
 						<view @click="selectSonParam(index)" :style="sonParamIndex==index?'background-color: #eee':''" class="param_option">{{option}}</view>
 					</view>
 				</view>
@@ -32,11 +32,13 @@
 
 			
 			<qiun-data-charts type="line" :chartData="chartData" :opts="opts" :ontouch="true"/>
-			<!-- <button @click="addData">加数据</button> -->
-			<button @click="" style="margin: 20rpx 0">下载历史数据</button>
-			<button @click="deleteData()" >删除历史数据</button>
+			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
+			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
+				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">删除历史数据</button>
+				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">下载历史数据</button>
+			</view>
 			<!-- <button @click="clickBtn1">发送F6</button> -->
-			<button @click="clickBtn2" style="margin: 20rpx 0">获取历史数据</button>
+			<!-- <button @click="clickBtn2" style="margin: 20rpx 0">获取历史数据</button> -->
 	
 		</view>
 	</view>
@@ -53,7 +55,7 @@
 				selectOption:-1, //选中的参数的参数id
 				isNewDevice:true,
 				includeParamArr:[],  //集合，历史数据中包含的参数类型id
-				valueArr:[],
+				normalValueArr:[],
 				manyParamValueArr:[],  
 				paramArr:["","DDM_μ","DDM_m","PHG","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
 				unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
@@ -65,7 +67,6 @@
 						textColor:'#aaa',
 						name:"" //参数名，点击某一项会显示该name和值
 					  },
-					  
 					]
 				},
 				opts: {
@@ -92,37 +93,70 @@
 				manyParamUnit:["℃","mg/L","mg/L","PSU","","mV","mg/L","mg/L","NTU"]
 			}
 		},
+		onLoad(){			
+			console.log("执行了onload方法")
+			// let str = "["
+			// console.log( parseInt(str) )
+			// console.log(typeof parseInt(str))
+			this.includeParamArr = getApp().globalData.includeParamArr
+			this.normalValueArr = getApp().globalData.normalValueArr
+			this.manyParamValueArr = getApp().globalData.manyParamValueArr
+		},
 		onShow() {
-			let that = this
-			getApp().writeValueToBle("F6",str=>{
-				if(str.startsWith("[")&&str.endsWith("]")){
-					console.log(str)
-					let count = parseInt(str.substring(1,str.length-1))
-					console.log(count)
+			console.log("执行了onshow方法")
 
-					if(count<200){
-						getApp().writeValueToBle("FB",str=>{
-							that.handleStr(str)
-						})
-					}else{
-						uni.showModal({
-							content:`共发现${count}条历史数据，读取约耗时${count*0.047}秒，是否要读取`,
-							success(res) {
-								if(res.confirm){
-									console.log("你点击了确定")
-									getApp().writeValueToBle("FB",str=>{
-										that.handleStr(str)
-									})
-								}
+			if(this.normalValueArr.length ==0 && this.manyParamValueArr.length ==0){ //历史数据没存过，自动发f6指令，询问用户要不要读数据
+				let that = this
+				getApp().writeValueToBle("F6",str=>{
+					console.log(str,str.length,typeof str)
+					if(str.startsWith("[")&&str.endsWith("]")){
+						let count = parseInt(str.substring(1,str.length-1))
+						if(count && typeof count == "number"){
+							if(count<200){
+								getApp().writeValueToBle("FB",str=>{
+									that.handleStr(str)
+								})
+							}else{
+								uni.showModal({
+									content:`共发现${count}条历史数据，读取约耗时${count*0.047}秒，是否要读取`,
+									success(res) {
+										if(res.confirm){
+											console.log("发送FB")
+											getApp().writeValueToBle("FB",str=>{
+												that.handleStr(str)
+											})
+										}
+									}
+								})
 							}
-						})
+						}else{ //针对老设备f6失效的情况
+							uni.showModal({
+								content:"f6指令未读取到数据条数，是否仍要读取数据",
+								success(res) {
+									if(res.confirm){
+										console.log("发送FB")
+										getApp().writeValueToBle("FB",str=>{
+											that.handleStr(str)
+										})
+									}
+								}
+							})
+						}
+						
+						
 					}
 					
-				}
-				
-			})
+				})
+			}
+			
 		},
 		methods: {	
+			downloadData(){
+				uni.showToast({
+					icon:'none',
+					title:'未实现'
+				})
+			},
 			deleteData(){
 				uni.showModal({
 					content:"是否清除历史记录",
@@ -168,6 +202,8 @@
 						this.opts.yAxis.data[0].title = "NTU"
 					}else if(index==3){
 						this.opts.yAxis.data[0].title = "mg/L"
+					}else if(index == 0){
+						this.opts.yAxis.data[0].title = this.unitArr[this.selectOption]
 					}
 				}else{ //多参数的单位有特定安排
 					this.opts.yAxis.data[0].title = this.manyParamUnit[index]
@@ -178,7 +214,7 @@
 				let needArr
 				let data
 				if(this.selectOption != 0){ //普通传感器数据，单参数
-					needArr = this.valueArr.filter((item)=>item[1]==this.selectOption)
+					needArr = this.normalValueArr.filter((item)=>item[1]==this.selectOption)
 					data = needArr.map(item=>{return item[2+index]})
 				}else{ //多参数设备
 					needArr = this.manyParamValueArr
@@ -251,7 +287,7 @@
 					if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
 						this.includeParamArr.push(arr[1])
 					}
-					this.valueArr.push(arr)
+					this.normalValueArr.push(arr)
 				}else if(arr[0]==1){
 					this.manyParamValueArr.push(arr)
 				}
@@ -307,7 +343,7 @@
 		text-align: center;
 	}
 	.attribute{
-		width: 20%;color: gray;display: flex;align-items: center;
+		width: 20%;color: gray;display: flex;
 	}
 	.value_attr{
 		color: gray;margin-bottom: 20rpx;

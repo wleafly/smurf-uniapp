@@ -44,7 +44,7 @@
 				<view v-for="device,index in deviceArr" class="chart_view" :key="index">
 					<view class="flex_row_between" style="padding: 0rpx 40rpx;height: 100rpx;align-items: center;">
 						<view class="flex_row_between" style="width: 80%;font-size: 35rpx;">
-							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF':''">{{paramArr[device.param]}}</view>
+							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">{{paramArr[device.param]}}</view>
 							<view>{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().value:""}}{{unitArr[device.param]}}</view>
 						</view>
 						<image v-if="deviceArr.length!=0" :src="chartDisplay[index]?'../../static/折叠.png':'../../static/展开.png'" @click="showOrFold(index)" style="width: 50rpx;height: 50rpx"></image>
@@ -54,14 +54,14 @@
 						<view class="flex_row_between" style="padding: 20rpx 30rpx;border-top: 1px solid lightgray;">
 							<view class="flex_row_between" style="width: 80%;">
 								<view style="color: gray;">地址：{{device.address}}</view>
-								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF':''">温度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().temperature:""}} ℃</view>
+								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''">温度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().temperature:""}} ℃</view>
 							</view>
 						</view>
 						
 						<view v-if="device.param==9" class="flex_row_between" style="padding: 0rpx 30rpx;margin-bottom: 20rpx;">
 							<view class="flex_row_between" style="width: 80%;">
-								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF':''">浊度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().mud:""}} NTU</view>
-								<view @click="switchChart(index,3)" ><text :style="lightOptions[index]==3?'color: #2D9AFF':''">BOD</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().bod:""}} mg/L</view>
+								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''">浊度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().mud:""}} NTU</view>
+								<view @click="switchChart(index,3)" ><text :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''">BOD</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().bod:""}} mg/L</view>
 							</view>
 						</view>
 						
@@ -75,18 +75,16 @@
 			<!-- 多参数类型 -->
 			<view v-else>
 				<view class="element_style" style="margin: 15rpx;padding: 20rpx 10rpx;">
-					<view class="row" style="margin-bottom: 20rpx;">
-						<view class="item">化学需氧量(COD)<br>{{valueArr.length?valueArr[valueArr.length-1].val1:''}}</view>
-						<view class="item">浊度(COD)<br>{{valueArr.length?valueArr[valueArr.length-1].val2:''}}</view>
-						<view class="item">电导率/盐度<br>{{valueArr.length?valueArr[valueArr.length-1].val3:''}}</view>
-						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx;font-size: 25rpx;">PH<br>{{valueArr.length?valueArr[valueArr.length-1].val4:''}}</view>
+					<view style="display: flex;flex-wrap: wrap;">
+						<view @click="switchManyParamChart(-1)" :style="manyParamLightOption==-1?'color: #007AFF;':''" class="item" style="border-right: 1rpx solid gray;">温度<br>{{valueArr.length?valueArr[valueArr.length-1].temperature:''}}</view>
+						<view @click="switchManyParamChart(index)"  v-for="paramItem,index in originalManyParamsConfig" class="item" 
+						:style="((index-1)%3==0?'':'border-right: 1rpx solid gray;')+(manyParamLightOption==index?'color: #007AFF;':'')" >
+							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?paramItem:'--'):paramItem):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':manyParamsConfig[index-1]):paramItem)}}<br>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
+						</view>
+						
 					</view>
-					<view class="row">
-						<view class="item">ORP<br>{{valueArr.length?valueArr[valueArr.length-1].val5:''}}</view>
-						<view class="item">溶解氧<br>{{valueArr.length?valueArr[valueArr.length-1].val6:''}}</view>
-						<view class="item">铵氮/离子类<br>{{valueArr.length?valueArr[valueArr.length-1].val7:''}}</view>
-						<view style="width: 25%;padding:0rpx 30rpx;line-height: 60rpx;font-size: 25rpx;">浊度<br>{{valueArr.length?valueArr[valueArr.length-1].val8:''}}</view>
-					</view>
+					<qiun-data-charts type="line" :chartData="chartDataArr[0]" :opts="opts_many" :ontouch="true"/>
+					
 				</view>
 			</view>
 				
@@ -116,11 +114,12 @@
 				interval_input: '',
 				index_with_time: 0,//valueArr中包含间隔和测试时间的索引
 				deviceName:'',
+				manyParamLightOption:-1, //多参数高亮选项，默认-1代表显示温度
 				lightOptions:[0,0,0,0],//高亮选项，选中哪个就显示哪个图表，0是参数，1温度，2浊度，3BOD,默认显示参数
 				chartDisplay:[true,false,false,false],//可以扩展，在后面追加false即可.目前新设备只能接4个传感器
 				deviceArr:[],
 				valueArr:[],
-				currentLen:0,//当前带花括号的数据长度
+				// currentLen:0,//当前带花括号的数据长度
 				paramArr:["","DDM_μ","DDM_m","PHG","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
 				unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
 				chartDataArr:[],
@@ -147,12 +146,39 @@
 						}]
 					}
 				},
-				
-				showLoading:false
+				opts_many:{
+					enableScroll: true,
+					update:true,
+					legend: {show:false},
+					animation:false,
+					duration:0,	
+					scrollPosition:'right',
+					xAxis: {
+					  itemCount: 8
+					},
+					yAxis: {
+						showTitle:true,
+						data: [{
+							title: "℃", //纵坐标单位
+							tofix: 0, //保留几位小数，0表示随数据自动调整
+						}]
+					}
+				},
+				manyParamsConfig:null,
+				showLoading:false,
+				manyParamChartData:null,
+				originalManyParamsConfig:["化学需氧量(COD)","浊度(COD)",'电导率/盐度','PH','ORP','溶解氧','铵氮/离子类','浊度'],
+				originalManyParamsConfigUnit:["mg/L","NTU","mS/cm","","mV","mg/L","mg/L","NTU"]
 			}
+		},
+		onload(){
+			
 		},
 
 		onShow() {
+			console.log('执行了onShow')
+			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
+			
 			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
 				this.index_with_time = 0
 				this.showLoading = true
@@ -174,7 +200,7 @@
 			this.deviceName = getApp().globalData.deviceName //app.vue中应为""
 			this.deviceArr = getApp().globalData.deviceArr //app.vue中应为[]
 			this.valueArr = getApp().globalData.valueArr //app.vue中应为[]
-			this.currentLen = this.valueArr.length //记住当前数值长度，当长度变化时，执行更新图表的逻辑
+			// this.currentLen = this.valueArr.length //记住当前数值长度，当长度变化时，执行更新图表的逻辑
 			
 			if(this.valueArr.length>0){ //有花括号数据时，获取电量
 				this.setElectric() 
@@ -186,75 +212,78 @@
 			},3000000)
 
 			this.setChart()
-			//循环执行，发现新数据就更新对应的表格
-			// this.timer = setInterval(()=>{
-				
-			// 	if(this.currentLen==0){ //数据从无到有时，需要更新电量
-			// 		this.setElectric()
-			// 	}
-			// 	let newAddNum = this.valueArr.length-this.currentLen
-			// 	this.currentLen = this.valueArr.length
-
-			// 	if(this.deviceArr[0] && this.deviceArr[0].type!=1){  //不是多参数设备时，有新数据要更新图表的数据，多功能传感器暂时不设置图表功能
-			// 		if(newAddNum>0){ //说明有新的值
-			// 			let newValues = this.valueArr.slice(this.valueArr.length-newAddNum,this.valueArr.length)
-			// 			for(var oneRecord of newValues){
-			// 				let index = this.deviceArr.findIndex((item)=>{return item.param==oneRecord.param})
-			// 				let insertValue
-			// 				if(this.lightOptions[index]==0){
-			// 					insertValue = oneRecord.value
-			// 				}else if(this.lightOptions[index]==1){
-			// 					insertValue = oneRecord.temperature
-			// 				}else if(this.lightOptions[index]==2){
-			// 					insertValue = oneRecord.mud
-			// 				}else if(this.lightOptions[index]==3){
-			// 					insertValue = oneRecord.bod
-			// 				}
-							
-			// 				this.chartDataArr[index] = {
-			// 					categories:[...this.chartDataArr[index].categories,this.chartDataArr[index].categories.length+1],
-			// 					series: [
-			// 					  {
-			// 						data: [...this.chartDataArr[index].series[0].data,...[insertValue]],
-			// 						textColor:'#aaa'
-			// 					  }
-			// 					]
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-				
-			// },3000)
-			
-
 
 		},
 		
 		onReady() {  //onShow方法中showLoading无效,但是onReady只执行一次
-
+			// setInterval(()=>{
+			// 	this.valueArr.push({temperature:23.5,values:[25,15,24.3,3.3,3.1,2,3,32],electric:3.764})
+			// },3000)
 
 		},
 		onHide() {
-			// clearInterval(this.timer) //清除更新图表的定时器
 			clearInterval(this.electric_timer) //清除更新电量的定时器
 		},
 		methods:{
+			switchManyParamChart(index){
+				this.manyParamLightOption = index
+				let categories = []
+				let data = []
+				let i=1
+				if(index==-1){
+					this.opts_many.yAxis.data[0].title = "℃"
+					for(var value of this.valueArr){
+						categories.push(i)
+						data.push(value.temperature)
+						i++
+					}
+				}else{
+					if(this.manyParamsConfig){ //参数表手动修改过
+						if(index>1){
+							
+							this.opts_many.yAxis.data[0].title = getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.indexOf(this.manyParamsConfig[index-1])]
+						}else{
+							if(index==0){
+								this.opts_many.yAxis.data[0].title = "mg/L"
+							}else if(index == 1){
+								this.opts_many.yAxis.data[0].title = "NTU"
+							}
+						}
+					}else{ //多参数默认配置的情况
+						this.opts_many.yAxis.data[0].title = this.originalManyParamsConfigUnit[index]
+					}
+				
+					for(var value of this.valueArr){
+						categories.push(i)
+						data.push(value.values[index])
+						i++
+					}
+				}
+				
+
+				this.chartDataArr[0] = {
+					//categories和默认参数是一样的，不用设置
+					categories:categories,
+					series: [
+					  {
+						data: data,
+						textColor:'#aaa',
+						// name:name
+					  }
+					]
+				}
+			},
 			open_alter_time_popup() {
 				this.$refs.popup.open()
 			},
 			/**
 			 * 点击取消按钮触发
-			 * @param {Object} done
 			 */
 			close_popup() {
-				// TODO 做一些其他的事情，before-close 为true的情况下，手动执行 close 才会关闭对话框
-				// ...
 				this.$refs.popup.close()
 			},
 			/**
 			 * 点击确认按钮触发
-			 * @param {Object} done
-			 * @param {Object} value
 			 */
 			confirm_alter_time() {
 				// 输入框的值
@@ -362,16 +391,31 @@
 				},3000)
 			},
 			setChart(){
+				
 				this.deviceArr.forEach((item,index)=>{  //遍历设备数组
-					let itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
+					let itemArr
 					let categories = []
 					let series_data = []
+					let param_name
 					let i=1
-					for(var it of itemArr){
-						categories.push(i)
-						series_data.push(it.value)
-						i++
+					if(item.type == 1){ //多参数情况
+						itemArr = this.valueArr //获取全部值数据，作为图表的数据来源
+						for(var it of itemArr){
+							categories.push(i)
+							series_data.push(it.temperature)//多参数默认显示温度
+							i++
+						}
+						param_name = ''
+					}else{ //一般情况
+						itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
+						for(var it of itemArr){
+							categories.push(i)
+							series_data.push(it.value)//单参数默认显示主参数值
+							i++
+						}
+						param_name = this.paramArr[this.deviceArr[index].param]
 					}
+
 					// itemArr.map(item=>{return item.value})
 					this.chartDataArr[index]={
 						categories: categories,
@@ -379,7 +423,7 @@
 						  {
 							data: series_data,
 							textColor:'#aaa',
-							name:this.paramArr[this.deviceArr[index].param]
+							name:param_name
 						  }
 						]
 					}
@@ -482,7 +526,33 @@
 				this.setChart()
 			},
 			valueArr(){ //valueArr加入新数据后，要对相应折线图的数据重新赋值
+				if(this.deviceArr[0] && this.deviceArr[0].type == 1){ //接多参数的情况,多参数的情况下设备列表只能有一支
+					//给多参数折线图chartdata赋值的逻辑写在这里
+					if(this.valueArr.length==1){ //从无到有的第一条，要设置一次电量
+						this.setElectric()
+					}
+					let newValue = this.valueArr[this.valueArr.length-1]
+					let insertValue
+					if(this.manyParamLightOption==-1){ //当前显示的是温度
+						insertValue = newValue.temperature
+					}else{
+						insertValue = newValue.values[this.manyParamLightOption]
+					}
+					this.chartDataArr[0] = {
+						categories:[...this.chartDataArr[0].categories,this.chartDataArr[0].categories.length+1],
+						series: [
+						  {
+							data: [...this.chartDataArr[0].series[0].data,...[insertValue]],
+							textColor:'#aaa'
+						  }
+						]
+					}
+					return
+				}
 				if(this.valueArr.length){
+					if(this.valueArr.length==1){ //从无到有的第一条，要设置一次电量
+						this.setElectric()
+					}
 					let newValue = this.valueArr[this.valueArr.length-1]
 					let index = this.deviceArr.findIndex((item)=>{return item.param==newValue.param}) //根据param获取新数据在列表中的索引
 					let insertValue  
@@ -532,15 +602,11 @@
 	.time_style{
 		height: 70rpx;width: 50%;text-align: center;line-height: 70rpx;
 	}
-	.row{
-		display: flex;
-		flex-direction: row;
-		justify-content: space-around;
-		align-items: center;
-		.item{
-			border-right: 1rpx solid gray;width: 25%;text-align: center;line-height: 60rpx;padding:0rpx 30rpx;font-size: 25rpx;
-		}
+
+	.item{
+		text-align: center;line-height: 40rpx;font-size: 25rpx;width: 33%;margin-bottom: 30rpx;
 	}
+	
 	.head{
 		margin: 15rpx 0rpx;background-image: linear-gradient(to bottom right,skyblue,white);display: inline-block;height: 150rpx;width: 150rpx;border-radius: 75rpx;
 		text-align: center;line-height: 150rpx;font-weight: 800;font-size: 35rpx;color: dimgray

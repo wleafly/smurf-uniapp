@@ -1,211 +1,165 @@
 <template>
 	<view>
-		<!-- <view class="gif">
-			<image src="../../static/loading_gif.gif"></image>
-		</view> -->
+		<view style="display: flex;flex-direction: column;;justify-content: center;align-items: center;height: 500rpx;">
 		
-		<u-loading-icon mode="semicircle" text="半圆"></u-loading-icon>
-		<view>
-			<!-- 提示窗 -->
-			<uni-popup ref="alertDialog" type="dialog">
-				<uni-popup-dialog :type="msgType" cancelText="关闭" :content="content"
-					@confirm="dialogConfirm" @close="dialogClose"></uni-popup-dialog>
-			</uni-popup>
+			<circle-animation size="100" v-if="isWait"></circle-animation>
+			<view v-else>
+				<icon v-if="isUseful" type="success" style="margin-top: 50rpx;" size="100" color="#00ff80"></icon>
+				<icon v-else type="warn" style="margin-top: 50rpx;" size="100" color="#ffcd69"></icon>
+				
+			</view>
 		</view>
+		
+		<view v-for="i,index in sequenceArr" style="color: dimgray;font-size: 40rpx;display: flex;justify-content: space-between;padding: 40rpx 120rpx">
+			<view>{{i}}</view>
+			
+			<u-loading-icon v-if="statusArr[index]==0" color="#89B7EC" mode="semicircle"></u-loading-icon>
+			<image v-else-if="statusArr[index]==1" src="../../static/勾.png" style="width: 40rpx;height: 40rpx;"></image>
+			<image v-else src="../../static/叉.png" style="width: 40rpx;height: 40rpx;"></image>
+		</view>
+		
+		<!-- <view v-if="!isWait" style="color: darkgray;text-align: center;margin-top: 180rpx;">错误码：10003，蓝牙设备断开连接</view> -->
+		
 	</view>
 </template>
 
 <script>
-	export default{
+	export default {
 		data() {
-			return{
-				deviceId:'',
-				serviceId:'',
-				notifyCharacteristicId:'',
-				writeCharacteristicId:'',
-				state:0,
-				type: 'center',
-				msgType: 'success',
-				count:0,
-				content:'',
-				str:'',
+			return {
+				isWait:true,
+				isUseful:false,
+				sequenceArr:["连接设备"],
+				statusArr:[0,0,0] //0等待，1成功，2失败
+			};
+		},
+		methods:{
+			showModal(txt){
+				uni.showModal({
+					content:txt,
+					showCancel:false
+				})
 			}
 		},
-		onShow() {
-			this.deviceId=getApp().globalData.deviceCoreData.deviceId
-			this.serviceId=getApp().globalData.deviceCoreData.serviceId
-			this.notifyCharacteristicId=getApp().globalData.deviceCoreData.notifyCharacteristicId
-			this.writeCharacteristicId=getApp().globalData.deviceCoreData.writeCharacteristicId
-			this.check()
-		},
-		methods: {
-			dialogToggle(type) {
-				this.msgType = type
-				this.$refs.alertDialog.open()
-			},
-			dialogConfirm() {
-				console.log('点击确认')
-			},
-			dialogClose() {
-				console.log('点击关闭')
-			},
-			showModal() {
-				uni.showLoading({
-					title: '加载中',
-				})
-				setTimeout(() => {
-					uni.hideLoading()
-					this.dialogToggle('success')
-				},3000)
-			},
-			check(){
-				let msg = 'F900'
-				uni.showLoading({
-					title: '加载中',
-				})
-				this.send(msg)
-				setTimeout(() => {
-					if(this.state == 0){
-						this.send('FA')
-					}
-				},11000)
-				setTimeout(() => {
-					if(this.state == 0){
-						uni.showToast({
-							title: '数据通信不通畅，请重启设备',
-							duration: 3000
-						})
-						uni.hideLoading()
-						this.content = '数据通信不通畅，请检查传感器连接，并重启设备'
-						this.dialogToggle('success')
-						console.log('数据通信不通畅，请检查传感器连接，并重启设备')
-						
-					}
-				},7000)
-			},
-			//通过蓝牙向设备发送数据
-			send(msg){
-				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {
-					return parseInt(h, 16)
-					}))
-				var buffer = typedArray.buffer
+		onReady() {
+			// setTimeout(()=>{
+			// 	this.statusArr[0] = 1
+			// 	this.sequenceArr.push("测试指令")
+			// 	setTimeout(()=>{
+			// 		this.statusArr[1] = 1
+			// 		this.sequenceArr.push("分析数据")
+			// 		setTimeout(()=>{
+			// 			this.statusArr[2] = 2
+			// 			this.isWait = false
+			// 			// this.isUseful = false
+			// 		},1000)
+			// 	},1000)
+			// },1000)
+			
+			if(getApp().globalData.deviceCoreData.deviceId){
 				let that = this
-				
-				uni.writeBLECharacteristicValue({
-					deviceId:this.deviceId,
-					serviceId:this.serviceId,
-					characteristicId:this.writeCharacteristicId,
-					value:buffer,
-					success(res) {
-						uni.showToast({icon:'none',title: "数据发送成功"})
-						// console.log(res)
-						console.log("数据发送成功")
-						that.listenValueChange()
-					},
-					fail(err) {
-						console.error(err)
-						uni.showToast({icon:'none',title: "数据发送失败"})
-						console.log("数据发送失败")
-					}
+				uni.getConnectedBluetoothDevices({ //获取处于已连接状态的设备
+				  success(res) {
+					  let isConnect = false
+					  for(let device of res.devices){
+						  // console.log(device.deviceId)
+						  if(device.deviceId == getApp().globalData.deviceCoreData.deviceId){
+							  isConnect = true
+						  }
+					  }
+					  if(isConnect){
+						  that.statusArr[0] = 1
+						  that.sequenceArr.push("测试指令")
+						  let haveHeadData = false
+						  let isSendSuccess = false
+						  let isFirstGetData = true
+						  let tempStr = ""
+						  let getFirstValue = true
+						  setTimeout(()=>{ //30秒没接到花括号数据，则指令测试失败
+							if(isFirstGetData){
+								that.showModal("未获取到数据")
+								that.statusArr[1] = 2
+								that.isWait = false
+							}else{
+								if(!haveHeadData){
+								 that.showModal("数据获取异常，无法识别传感器类型")
+								 that.statusArr[2] = 2
+								 that.isWait = false
+								}
+							}
+						    
+						  },30000)
+						  getApp().writeValueToBle('F900',(str)=>{ //写数据成功时
+						    console.log(str)
+							if(isFirstGetData){
+								console.log('第一次收到数据')
+								that.statusArr[1] = 1
+								that.sequenceArr.push("分析数据")
+								isFirstGetData = false
+
+							}
+							if(str.startsWith('[')&&str.endsWith(']')){
+							    haveHeadData = true
+								// console.log("发现中括号数据",str)
+							}
+							if(haveHeadData&&getFirstValue){
+								// console.log("收到有效数据",str)
+								if(str.startsWith('{')&&str.endsWith('}')){						
+									tempStr = str
+								}else if(str.startsWith('{')&&!str.endsWith('}')){				
+									tempStr = str
+								}else if(!str.startsWith('{')&&!str.endsWith('}')&&str.indexOf('[')==-1){	
+									tempStr = tempStr + str
+								}else if(!str.startsWith('{')&&str.endsWith('}')){
+									tempStr = tempStr + str
+								}
+								
+								if(tempStr.startsWith('{')&&tempStr.endsWith('}')){
+									// console.log(tempStr)
+									getFirstValue = false
+									let arr = tempStr.slice(1,tempStr.length-2).split(',')
+									console.log('电量',parseFloat(arr[arr.length-3]))
+									if(parseFloat(arr[arr.length-3])>3.2){
+										// //指令测试成功
+										that.statusArr[2] = 1
+										that.isUseful = true
+										that.isWait = false
+
+									}else{
+										that.statusArr[2] = 2
+										that.isUseful = false
+										that.isWait = false
+										that.showModal("电量不足,请及时充电")
+									}
+
+								}
+							}
+
+							},()=>{ //写数据失败时
+							  that.showModal("指令发送失败")
+							  that.sequenceArr[1] = 2
+							  that.isWait = false
+						  })
+
+					  }else{
+						  this.isWait = false
+						  that.showModal("设备连接断开")
+						  that.statusArr[0] = 2
+					  }
+				    
+				  }
 				})
-			},
-			//监听数据变化
-			listenValueChange() {
-				let that = this
-			    uni.onBLECharacteristicValueChange(res => {
-			        let resHex = this.ab2hex(res.value)
-					
-			        let result = this.hexCharCodeToStr(resHex)
-					console.log(result)
-					
-					if(result.charAt(0) == '[' && result.charAt(1) >= '0'){
-						this.state = 1
-						uni.hideLoading()
-						console.log('数据通信正常')
-						this.content = '数据通信正常'
-						this.dialogToggle('success')
-					}else if(result.charAt(0) == '{' && this.state == 0 && this.count == 2){
-						console.log('F900正常，FA不正常')
-						
-						if(result.charAt(result.length-1)!='}'){ //数据过长，对数据进行拼接
-							this.str = ''
-							this.str = this.str + result
-						}else if(result.charAt(0)!='{' && result.charAt(result.length-1)=='}'){ //第一位不是'{',且最后一位是'}'
-							this.str = this.str + result
-							this.str = this.str.slice(1,this.str.length-1)
-							this.str = this.str.split(',')
-							console.log(this.str)
-						}else{
-							result = result.slice(1,result.length-1)
-							result = result.split(',')
-							this.str = result
-							console.log(this.str)
-						}
-						
-						if(Number(this.str[this.str.length-2])<3.4){
-							uni.hideLoading()
-							this.content = '电池电量过低，请充电'
-							this.dialogToggle('success')
-							return
-						}
-						uni.hideLoading()
-						this.content = 'F900正常，FA不正常'
-						this.dialogToggle('success')
-						
-					}else{
-						this.count += 1
-					}
-					
-					result = String(result)
-			    })
-			},
-			onBluetoothAdapterStateChange(){
-				uni.onBLEConnectionStateChange((res) => {
-					if(res.connected == false){
-						// uni.showModal({
-						// 	title: "蓝牙连接断开"
-						// })
-						console.log("蓝牙连接断开")
-					}
-				})
-			},
-			// ArrayBuffer转16进制字符串
-			ab2hex(buffer) {
-			    const hexArr = Array.prototype.map.call(
-			        new Uint8Array(buffer),
-			        function(bit) {
-						return ('00' + bit.toString(16)).slice(-2)
-			        }
-			    )
-			    return hexArr.join('')
-			},
-			// 将16进制转成字符串
-			hexCharCodeToStr(hexCharCodeStr) {
-			    var trimedStr = hexCharCodeStr.trim();
-			    var rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
-			    var len = rawStr.length;
-			    if (len % 2 !== 0) {
-			        alert("存在非法字符!");
-			        return "";
-			    }
-			    var curCharCode;
-			    var resultStr = [];
-			    for (var i = 0; i < len; i = i + 2) {
-			        curCharCode = parseInt(rawStr.substr(i, 2), 16);
-			        resultStr.push(String.fromCharCode(curCharCode));
-			    }
-			    return resultStr.join("");
-			},
+			}else{
+				this.isWait = false
+				this.showModal("请先连接设备")
+				this.statusArr[0] = 2
+			}
+			
+			
 		}
 	}
 </script>
 
 <style>
-	.gif{
-		flex: auto;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-	}
+
 </style>

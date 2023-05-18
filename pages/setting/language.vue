@@ -71,9 +71,10 @@
 
 <style>
 	.btn{
-		margin-top: 100rpx;
-		width: 60%;
-		border-radius: 30rpx;
-		margin-left: 150rpx;
+		margin: 50rpx 30rpx;
+		background-color: #89B7EC;
+		color: white;
+		border-radius: 20rpx;
+		
 	}
 </style>

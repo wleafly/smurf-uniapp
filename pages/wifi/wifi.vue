@@ -37,6 +37,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				blueToothStateArr:[], //代表连接状态，0表示未连接，1表示正在连接，2表示正在使用
 				usedDeviceIndex:-1, //记录当前连接到的设备的索引
 				connectNum:0,//连接次数，连接蓝牙设备可能多次失败，要自动重连，每次+1,连接成功重置为0
+				isManualClose:false
 			}
 		},
 		onLoad() {
@@ -67,15 +68,23 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 		methods: {
 			//连接蓝牙设备
 			connectBle(index){
-				uni.stopPullDownRefresh() //关闭动画
+				
 				let deviceId = this.blueToothList[index].deviceId
 				let that = this
 				if(this.blueToothStateArr[index]==0){ //点击了连接
 					this.$set(this.blueToothStateArr,index,1) //状态改为正在连接
-					this.createBLEConnection(index,deviceId)
+					uni.stopPullDownRefresh() //关闭动画
+					uni.stopBluetoothDevicesDiscovery({ //连接到蓝牙设备后，停止搜索蓝牙设备
+					  success(res) {
+						console.log("提前关闭搜索",res)
+					  }
+					})
+					setTimeout(()=>{this.createBLEConnection(index,deviceId)},1000)
+					
 				}else if(this.blueToothStateArr[index]==2){ //点击了断开
 					//关闭与对应蓝牙设备的连接
 					this.$set(that.blueToothStateArr,index,0)
+					this.isManualClose = true
 					uni.closeBLEConnection({ 
 					  deviceId,
 					  success(res) {
@@ -104,12 +113,12 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						console.log("蓝牙连接成功",res)
 						that.connectNum = 0
 						that.usedDeviceIndex = index
-						uni.stopBluetoothDevicesDiscovery({ //连接到蓝牙设备后，停止搜索蓝牙设备
-						  success(res) {
-							console.log("提前关闭搜索",res)
-						  }
-						})
-						uni.stopPullDownRefresh() //提前关闭加载动画
+						// uni.stopBluetoothDevicesDiscovery({ //连接到蓝牙设备后，停止搜索蓝牙设备
+						//   success(res) {
+						// 	console.log("提前关闭搜索",res)
+						//   }
+						// })
+						// uni.stopPullDownRefresh() //提前关闭加载动画
 						that.connectionStateChange()
 						setTimeout(()=>{
 							uni.getBLEDeviceServices({
@@ -154,6 +163,10 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 														that.$set(that.blueToothStateArr,index,2) //连接成功，将按钮文字改为断开
 														getApp().globalData.deviceArr = [] //清除数据，二次连接时有用
 														getApp().globalData.valueArr = []
+														getApp().globalData.includeParamArr = [] //二次连接时，也要清除历史数据，这样进入历史数据页就能重新发f6指令了
+														getApp().globalData.normalValueArr = []
+														getApp().globalData.manyParamValueArr = []
+
 														getApp().globalData.deviceName = that.blueToothList[index].name
 														getApp().globalData.deviceCoreData = { //存储各种id到全局变量，其他页面也要用
 															deviceId:deviceId,
@@ -161,6 +174,8 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 															notifyCharacteristicId:notifyCharacteristicId,
 															writeCharacteristicId:writeCharacteristicId
 														}
+														
+														getApp().globalData.firstLoading = true //把断开连接后进首页重新加载改成连接成功后重新加载
 														
 														// console.log('服务获取成功:',getApp().globalData.deviceCoreData)
 														
@@ -210,6 +225,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 							},5000) //连接失败时，5秒后自动重连
 					}
 				})
+			
 			},
 
 			initBlueToothList() { //初始化数据，将蓝牙设备以列表显示
@@ -266,17 +282,66 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				let that = this
 				uni.onBLEConnectionStateChange((res) => {
 					if(res.connected == false){
-						// console.log(`当前断开的设备：${res.deviceId}`)
-						// console.log(`当前deviceCoreData存的设备：${getApp().deviceCoreData.deviceId}`)
-						// if(res.deviceId == getApp().deviceCoreData.deviceId){
-						// 	console.log("判断成功")
-						// }
-						uni.showToast({icon:'none',title: "设备连接断开"})
-						getApp().globalData.firstLoading = true
+						// getApp().globalData.firstLoading = true
+						console.log(res.deviceId+'断开连接')
 						that.$set(that.blueToothStateArr,that.usedDeviceIndex,0)
+						if(that.isManualClose){
+							uni.showToast({icon:'none',title: "手动断开连接"})
+							that.isManualClose = false
+						}else{ //被动断开连接
+							uni.showToast({icon:'none',title: "设备连接断开"})
+							setTimeout(()=>{
+								//1秒后自动重连
+								if(res.deviceId==getApp().globalData.deviceCoreData.deviceId){
+									that.reConnectBle(4) //最多重连4次		
+								}
+							},1000)
+						}
+
+
 					}
 				})
 			},
+			
+			reConnectBle(num){  //num代表最大重连次数
+				let that = this
+				if(num>0){
+					uni.createBLEConnection({
+						deviceId:getApp().globalData.deviceCoreData.deviceId,
+						success(res) {
+							console.log("重连成功")
+							setTimeout(()=>{
+								uni.notifyBLECharacteristicValueChange({
+								  state: true, // 启用 notify 功能
+								  deviceId:getApp().globalData.deviceCoreData.deviceId,
+								  serviceId:getApp().globalData.deviceCoreData.serviceId,
+								  characteristicId:getApp().globalData.deviceCoreData.notifyCharacteristicId,
+								  success:(res)=> {
+									console.log("重启notify服务成功")
+									//执行到这一步才能写数据
+									that.$set(that.blueToothStateArr,that.usedDeviceIndex,2) //重连成功，将按钮文字重新改为断开															
+								  },
+								  fail:(res)=> {
+									// console.log(res.errMsg)
+									console.log("重启notify服务失败,剩余重连"+num+"次")
+									setTimeout(()=>{
+										that.reConnectBle(--num)
+									},3000)
+								  }})
+							},1000)
+					
+						},fail(res) {
+							console.log("重连失败,剩余重连"+num+"次")
+							setTimeout(()=>{
+								that.reConnectBle(--num)
+							},3000)
+							
+						}
+					})
+				}
+				
+				
+			}
 			
 
 		},

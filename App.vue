@@ -16,24 +16,49 @@
 		},
 		globalData:{
 			deviceName:"", //蓝精灵的名字
-			deviceArr:[
-				// {
-				// 	address:3,
-				// 	type:0,//单参数
-				// 	param:9 
-				// },
-				// {
-				// 	address:6,
-				// 	type:0,
-				// 	param:6
-				// },
-				// {
-				// 	address:16,
-				// 	type:0,
-				// 	param:4 
-				// }
-			], //存传感器的类型
+			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
+			
+			// deviceArr:[
+			// 	{
+			// 		address:3,
+			// 		type:1,//多参数假数据
+			// 		param:4
+			// 	}
+			// ],
+			// valueArr:[ //多参数假数据
+			// 	{temperature:23.4,values:[5,5,34.3,3.4,3.3,3,2,32],electric:3.764,interval:3,testTime:2},
+			// 	{temperature:23.5,values:[25,15,24.3,3.3,3.1,2,3,32],electric:3.764},
+			// 	{temperature:23.4,values:[5,5,24.3,3.3,3.1,2,3,32],electric:3.764},
+			// 	{temperature:23.2,values:[15,35,34.3,3.4,3.3,3,2,32],electric:3.764}
+			// ],
+			
+			// deviceArr:[
+			// 	{
+			// 		address:3,
+			// 		type:0,//单参数
+			// 		param:9 
+			// 	},
+			// 	{
+			// 		address:6,
+			// 		type:0,
+			// 		param:6
+			// 	},
+			// 	{
+			// 		address:16,
+			// 		type:0,
+			// 		param:4 
+			// 	}
+			// ],
+					
+			// valueArr:[
+			// 	{param:9,address:3,value:34.3,temperature:23.4,mud:3.4,bod:3.3,electric:3.764,interval:3,testTime:2},//COD，多俩参数
+			// 	{param:6,address:6,value:26.4,temperature:23.4,electric:3.764},//一般类型
+			// 	{param:4,address:16,value:55,electric:3.764},//ORP，不带温度
+			// 	{param:9,address:3,value:37.3,temperature:23.2,mud:3.4,bod:3.3,electric:3.764},//COD，多俩参数
+			// 	{param:6,address:6,value:27.4,temperature:23.5,electric:3.763},//一般类型
+			// 	{param:4,address:16,value:55,electric:3.763}//ORP，不带温度
+			// ],
 			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
 			tempStr:"", //临时数据，存储不完整的蓝牙数据
 			isFirstData:true,
@@ -41,6 +66,14 @@
 			oldParamId:null,
 			addressToParamMap:[],
 			firstLoading:true,//代表进入数据页是否要发f900
+			
+			includeParamArr:[], //历史数据页包含的参数
+			normalValueArr:[],//历史数据页常规参数值数据
+			manyParamValueArr:[],//历史数据页多参数值数据
+			
+			manyParamsDefalut:["COD","电导率","PH","ORP","溶解氧","铵氮/离子类","浊度"] ,//多参数默认配置
+			manyParamCustomOptions:["电导率","PH","ORP","溶解氧","铵氮/离子类","浊度","盐度","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","未连接"],//多参数自定义的可选项
+			manyParamCustomUnits:["mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""]//多参数自定义的可选项对应的单位
 		},
 		methods:{
 			// ArrayBuffer转16进制字符串
@@ -262,14 +295,17 @@
 				}else{ //多功能传感器
 					record = {
 						temperature:numArr[0],
-						val1:numArr[1],
-						val2:numArr[2],
-						val3:numArr[3],
-						val4:numArr[4],
-						val5:numArr[5],
-						val6:numArr[6],
-						val7:numArr[7],
-						val8:numArr[8],
+						values:[
+							numArr[1], //cod
+							numArr[2], //cod浊度
+							numArr[3], //电导率
+							numArr[4], //PH
+							numArr[5], //ORP
+							numArr[6], //溶解氧
+							numArr[7], //NHN
+							numArr[8], //浊度
+						],
+						
 						electric:numArr[9],
 					}
 				}
