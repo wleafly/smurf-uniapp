@@ -92,7 +92,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					  }
 					})
 					getApp().globalData.isFirstData = true //重新连接后，数据页要从第一条记录开始算了
-					getApp().globalData.firstLoading = true //重新连接后，数据页要发f900了，把firstLoading 设置为 true才行 
+					// getApp().globalData.firstLoading = true //重新连接后，数据页要发f900了，把firstLoading 设置为 true才行 
 				}
 				
 			

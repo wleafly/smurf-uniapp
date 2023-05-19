@@ -3,8 +3,8 @@
 		<view class="spinner">
 			<view class="bounce1"></view>
 			<view class="bounce2"></view>
-			<view class="bounce3"></view><br>
-			<text>{{txt}}</text>
+			<view class="bounce3"></view>
+			<text>\n{{txt}}</text>
 		</view>
 	</view>
 </template>

@@ -76,10 +76,10 @@
 			<view v-else>
 				<view class="element_style" style="margin: 15rpx;padding: 20rpx 10rpx;">
 					<view style="display: flex;flex-wrap: wrap;">
-						<view @click="switchManyParamChart(-1)" :style="manyParamLightOption==-1?'color: #007AFF;':''" class="item" style="border-right: 1rpx solid gray;">温度<br>{{valueArr.length?valueArr[valueArr.length-1].temperature:''}}</view>
+						<view @click="switchManyParamChart(-1)" :style="manyParamLightOption==-1?'color: #007AFF;':''" class="item" style="border-right: 1rpx solid gray;">温度<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].temperature:''}}</view>
 						<view @click="switchManyParamChart(index)"  v-for="paramItem,index in originalManyParamsConfig" class="item" 
 						:style="((index-1)%3==0?'':'border-right: 1rpx solid gray;')+(manyParamLightOption==index?'color: #007AFF;':'')" >
-							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?paramItem:'--'):paramItem):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':manyParamsConfig[index-1]):paramItem)}}<br>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
+							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?paramItem:'--'):paramItem):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':manyParamsConfig[index-1]):paramItem)}}<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
 						</view>
 						
 					</view>
@@ -89,13 +89,7 @@
 			</view>
 				
 		</view>
-		<!-- 未连接设备时显示 -->
-<!-- 		<view v-else class="remind_connect">
-			<icon type="info" size="50" color="#acacac"></icon>
-			
-			<view style="margin-top: 15rpx;">请连接设备</view>
-			
-		</view> -->
+
 		
 		<view v-if="showLoading" class="remind_connect">
 			<loading txt="正在获取数据"></loading>
