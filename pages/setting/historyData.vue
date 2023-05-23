@@ -35,7 +35,7 @@
 			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
 			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
 				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">删除历史数据</button>
-				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">下载历史数据</button>
+				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">预览数据表格</button>
 			</view>
 			<!-- <button @click="clickBtn1">发送F6</button> -->
 			<!-- <button @click="clickBtn2" style="margin: 20rpx 0">获取历史数据</button> -->
@@ -46,6 +46,7 @@
 </template>
 
 <script>
+	import * as XLSX from '../../static/excel.js'
 	export default {
 		data() {
 			return{
@@ -90,7 +91,8 @@
 					}
 				},
 				manyParamContent:["温度","COD","COD内置浊度","电导率/盐度","PH","ORP","溶解氧","NHN","浊度"],
-				manyParamUnit:["℃","mg/L","mg/L","PSU","","mV","mg/L","mg/L","NTU"]
+				manyParamUnit:["℃","mg/L","mg/L","PSU","","mV","mg/L","mg/L","NTU"],
+				manyParamsConfig:null
 			}
 		},
 		onLoad(){			
@@ -101,6 +103,7 @@
 			this.includeParamArr = getApp().globalData.includeParamArr
 			this.normalValueArr = getApp().globalData.normalValueArr
 			this.manyParamValueArr = getApp().globalData.manyParamValueArr
+			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 		},
 		onShow() {
 			console.log("执行了onshow方法")
@@ -152,10 +155,98 @@
 		},
 		methods: {	
 			downloadData(){
-				uni.showToast({
-					icon:'none',
-					title:'未实现'
+				/*#ifdef MP*/
+				const workbook = XLSX.utils.book_new();
+				for(let paramId of this.includeParamArr){
+					let needArr = this.normalValueArr.filter((item)=>{return item[1] == paramId})
+					let head = ["序号",`${this.paramArr[paramId]}(${this.unitArr[paramId]})`,"温度(℃)"]  //excel表头
+					if(paramId==4){
+						head.pop()
+					}else if(paramId == 9){
+						head = [...head,...["浊度(NTU)","BOD(mg/L)"]]
+					}
+					let resultArr = [head]
+					if(paramId == 4){
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2]])
+						})
+					}else if(paramId == 9){
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2],value[3],value[4],value[5]])
+						})
+					}else{
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2],value[3]])
+						})
+					}
+					// console.log(this.paramArr[paramId],resultArr) //表名和数据
+					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr), this.paramArr[paramId]);
+				}
+				
+				if(this.manyParamValueArr.length){
+					let head = []
+					if(this.manyParamsConfig){
+						head = ['温度(℃)', 'COD(mg/L)', 'COD内置浊度(mg/L)']
+						this.manyParamsConfig.forEach((item,index)=>{
+							if(index>0){
+								head[index+2] = `${item}(${getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.findIndex((option)=>{return option == item})]})`
+							}
+						})
+					}else{
+						this.manyParamContent.forEach((item,index)=>{
+							head[index] = `${item}(${this.manyParamUnit[index]})`
+						})
+					}
+					head.unshift("序号") //向开头添加元素用unshift
+					let resultArr = [head]
+					this.manyParamValueArr.forEach((value,index)=>{
+						resultArr.push([index+1,...value.slice(2,value.length)])
+					})
+					// console.log("多参数",resultArr)
+					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr),'多参数');
+				}
+				
+				const fileData = XLSX.write(workbook, {
+					bookType: "xlsx",
+					type: 'base64'
+				});
+				const filePath = `${wx.env.USER_DATA_PATH}/历史数据${new Date().toLocaleString()}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
+				const fs = wx.getFileSystemManager()
+				console.log(filePath)
+				fs.writeFile({
+					filePath: filePath,
+					data: fileData,
+					encoding: 'base64',
+					success: res => {
+						console.log('写文件成功', res)
+						const sysInfo = wx.getSystemInfoSync()
+						if (sysInfo.platform.toLowerCase().indexOf('windows') >= 0) {
+							wx.saveFileToDisk({
+								filePath: filePath,
+								success: console.log,
+								fail: console.error
+							})
+						} else {
+							wx.openDocument({
+								filePath: filePath,
+								showMenu: true, // 需要添加showMenu允许用户导出
+								success: console.log,
+								fail: console.error
+							})
+						}
+					},
+					fail: e => {
+						console.error(e)
+						if (e.errMsg.indexOf('locked')) {
+							wx.showModal({
+								title: '提示',
+								content: '文档已打开，请先关闭',
+							})
+						}
+					}
 				})
+				
+				/*#endif*/
 			},
 			deleteData(){
 				uni.showModal({
@@ -182,7 +273,14 @@
 				}else if(paramId==9){
 					this.optionalParams = ["COD","温度","浊度","BOD"]
 				}else if(paramId==0){  //多参数
-					this.optionalParams = this.manyParamContent
+					
+					if(this.manyParamsConfig){
+						this.optionalParams = [...this.manyParamContent.slice(0,3),...this.manyParamsConfig.slice(1,this.manyParamsConfig.length)]
+					}else{
+						this.optionalParams = this.manyParamContent
+					}
+					
+
 					
 				}else{ //一般情况
 					this.optionalParams = [this.paramArr[paramId],"温度"]
@@ -206,7 +304,11 @@
 						this.opts.yAxis.data[0].title = this.unitArr[this.selectOption]
 					}
 				}else{ //多参数的单位有特定安排
-					this.opts.yAxis.data[0].title = this.manyParamUnit[index]
+					if(this.manyParamsConfig && index >2){ //不是前三项，要用自定义的单位
+						this.opts.yAxis.data[0].title = getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.findIndex((option)=>{return option == this.manyParamsConfig[index-2]})]
+					}else{
+						this.opts.yAxis.data[0].title = this.manyParamUnit[index]
+					}
 				}
 				// console.log(this.selectOption)
 				// console.log(index)
