@@ -3,7 +3,7 @@
 		<view style="background-color: white;height: 100rpx;font-size: 35rpx;margin: 30rpx;border-radius: 30rpx;
 		display: flex;align-items: center;justify-content: space-between;padding-left: 30rpx;padding-right: 30rpx;">
 			<view>实时数据自动下载</view>
-			<switch :checked="false" @change="switchChange"></switch>
+			<switch :checked="autoDownload" @change="switchChange"></switch>
 			
 		</view>
 		<view style="background-color: white;border-radius: 30rpx;padding: 30rpx;margin: 30rpx;">
@@ -29,6 +29,7 @@
 	export default {
 		data() {
 			return {
+				autoDownload:null,
 				localArr:[],
 				chinaNumArr:['一','二','三','四','五','六','七'],
 				codCanSelect:['COD','未连接'],
@@ -48,12 +49,12 @@
 				this.localArr = getApp().globalData.manyParamsDefalut
 			},
 			switchChange(e){
+				uni.setStorageSync("autoDownload",e.detail.value)
 				if(e.detail.value){
-					// console.log("开关被打开了")
-					uni.showToast({
-						title:"未实现",
-						icon:'none'
-					})
+					getApp().globalData.autoDownload = true 
+				}else{
+					getApp().globalData.autoDownload = false
+					
 				}
 			},
 			bindPickerChange(index,e){
@@ -67,6 +68,7 @@
 		},
 		onLoad(){
 			this.canSelectParamArr = getApp().globalData.manyParamCustomOptions
+			this.autoDownload = getApp().globalData.autoDownload
 		},
 		onShow() {
 			let arr = uni.getStorageSync("manyParamsConfig") || getApp().globalData.manyParamsDefalut

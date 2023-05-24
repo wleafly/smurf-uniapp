@@ -170,7 +170,7 @@
 		},
 
 		onShow() {
-			console.log('执行了onShow')
+			// console.log('执行了onShow')
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 			
 			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行

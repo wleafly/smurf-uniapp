@@ -35,7 +35,7 @@
 			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
 			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
 				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">删除历史数据</button>
-				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">预览数据表格</button>
+				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">获取Excel表格</button>
 			</view>
 			<!-- <button @click="clickBtn1">发送F6</button> -->
 			<!-- <button @click="clickBtn2" style="margin: 20rpx 0">获取历史数据</button> -->
@@ -210,7 +210,7 @@
 					bookType: "xlsx",
 					type: 'base64'
 				});
-				const filePath = `${wx.env.USER_DATA_PATH}/历史数据${new Date().toLocaleString()}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
+				const filePath = `${wx.env.USER_DATA_PATH}/历史数据${getDateTime.dateTimeStr('y-m-d h:i:s')}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
 				const fs = wx.getFileSystemManager()
 				console.log(filePath)
 				fs.writeFile({

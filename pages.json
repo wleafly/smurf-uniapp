@@ -61,6 +61,16 @@
 		}
 	    
 
+        
+        ,{
+            "path" : "pages/setting/download",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 
 	"globalStyle": {

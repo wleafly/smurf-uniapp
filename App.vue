@@ -4,9 +4,13 @@
 </style>
 
 <script>
+	import getDateTime from '@/common/getdateTime.js'; 
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
+			if(uni.getStorageSync("autoDownload")){
+				getApp().globalData.autoDownload = uni.getStorageSync("autoDownload")
+			}
 		},
 		onShow: function() {
 			console.log('App Show')
@@ -15,10 +19,13 @@
 			console.log('App Hide')
 		},
 		globalData:{
+			autoDownload:false,//是否自动下载实时数据
 			deviceName:"", //蓝精灵的名字
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
 			
+			paramArr:["多参数","电导率","电导率","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
+			unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
 			// deviceArr:[
 			// 	{
 			// 		address:3,
@@ -240,11 +247,14 @@
 						}
 					}
 					if(getApp().globalData.isNewDevice){
-						console.log('看起来是新设备')
+						console.log('此型号是新设备')
 					}else{
-						console.log('看样子是老设备')
+						console.log('此型号是老设备')
 					}
-					
+					//如果开启了自动下载实时数据，则此处要添加标记
+					// if(getApp().globalData.autoDownload){
+					// 	this.addStorageRecord("start")
+					// }
 				}
 			},
 			storageValue(numArr){  //存数据到全局变量valueArr中，接收参数是一个数字数组
@@ -318,6 +328,18 @@
 				console.log(record)
 				getApp().globalData.valueArr.push(record)
 				
+				//如果开启了自动下载实时数据，此处还要更新缓存中的数据
+				if(getApp().globalData.autoDownload){
+					record.createTime = getDateTime.dateTimeStr('y-m-d h:i:s')
+					this.addStorageRecord(record)
+				}
+				
+			},
+			addStorageRecord(record){ //向当天的缓存中添加数据
+				// console.log('插入本地缓存',getDateTime.dateTimeStr('y-m-d'),record)
+				let arr = uni.getStorageSync(getDateTime.dateTimeStr('y-m-d')) || []
+				arr.push(record)
+				uni.setStorageSync(getDateTime.dateTimeStr('y-m-d'),arr)
 			}
 		}
 	}
