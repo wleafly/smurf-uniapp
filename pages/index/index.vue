@@ -1,7 +1,9 @@
 <template>
 	<view class="outer">
-		<!-- web下背景无效 -->
-		<image class="bg-img" src="/static/background.jpg"></image>
+		<!-- 只在小程序下生效 -->
+		<!-- #ifdef MP -->
+		     <image class="bg-img" src="/static/background.jpg"></image>
+		<!-- #endif -->
 		<!-- 修改时间的弹窗 -->
 		<uni-popup ref="popup" type="dialog">
 			<view class="alter_time_view">
@@ -19,10 +21,10 @@
 		</uni-popup>
 		
 		<view style="display: flex;flex-direction: row;align-items: center;justify-content: space-between;padding: 0rpx 20rpx;">
-			<view class="head">{{deviceArr.length>1?'多设备':(deviceArr.length==1?(deviceArr[0].type==1?'多参数':paramArr[deviceArr[0].param]):'未连接')}}</view>
-			<view>
+			<view class="head" @click="test">{{deviceArr.length>1?'多设备':(deviceArr.length==1?(deviceArr[0].type==1?'多参数':paramArr[deviceArr[0].param]):'未连接')}}</view>
+			<view style="display: flex;">
 				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #a8a8a8;">{{deviceName}}</text>
-
+				<u-loading-icon v-if="homeConfig.waitFirstValue" mode="circle" style="margin-left: 10rpx;"></u-loading-icon>
 			</view>
 			<!-- 电池 -->
 			<view class="flex_row_between" style="justify-content: center;align-items: center;">
@@ -69,7 +71,6 @@
 					</view>
 				
 				</view>
-				
 			</view>
 			
 			<!-- 多参数类型 -->
@@ -81,17 +82,15 @@
 						:style="((index-1)%3==0?'':'border-right: 1rpx solid gray;')+(manyParamLightOption==index?'color: #007AFF;':'')" >
 							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?paramItem:'--'):paramItem):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':manyParamsConfig[index-1]):paramItem)}}<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
 						</view>
-						
 					</view>
 					<qiun-data-charts type="line" :chartData="chartDataArr[0]" :opts="opts_many" :ontouch="true"/>
-					
 				</view>
 			</view>
 				
 		</view>
 
 		
-		<view v-if="showLoading" class="remind_connect">
+		<view v-if="showLoading && deviceArr.length==0" class="remind_connect">
 			<loading txt="正在获取数据"></loading>
 		</view>
 		
@@ -113,9 +112,9 @@
 				chartDisplay:[true,false,false,false],//可以扩展，在后面追加false即可.目前新设备只能接4个传感器
 				deviceArr:[],
 				valueArr:[],
-				// currentLen:0,//当前带花括号的数据长度
-				paramArr:["","DDM_μ","DDM_m","PHG","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
-				unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
+				// paramArr:["","DDM_μ","DDM_m","PH","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
+				paramArr:getApp().globalData.paramArr,
+				unitArr:getApp().globalData.unitArr,
 				chartDataArr:[],
 				eq:0, //剩余电量
 				batteryColor:"",
@@ -162,7 +161,8 @@
 				showLoading:false,
 				manyParamChartData:null,
 				originalManyParamsConfig:["化学需氧量(COD)","浊度(COD)",'电导率/盐度','PH','ORP','溶解氧','铵氮/离子类','浊度'],
-				originalManyParamsConfigUnit:["mg/L","NTU","mS/cm","","mV","mg/L","mg/L","NTU"]
+				originalManyParamsConfigUnit:["mg/L","NTU","mS/cm","","mV","mg/L","mg/L","NTU"],
+				homeConfig:getApp().globalData.homeConfig //判断是否收到花括号数据，在收到第一条后将waitFirstValue属性改为false，使用对象是为了和全局变量绑定
 			}
 		},
 		onload(){
@@ -205,7 +205,7 @@
 				}
 			},3000000)
 
-			this.setChart()
+			// this.setChart()
 
 		},
 		
@@ -295,14 +295,13 @@
 							testTime_hex = '0'+testTime_hex
 						}
 						let msg = 'FC'+intervals_hex+testTime_hex
-						
-						var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {
-							return parseInt(h, 16)}))
-						var buffer = typedArray.buffer
-						// console.log(msg)
+
 						uni.showLoading({
 							title:'更改中'
 						})
+						
+						let count = 0
+						let alter_success = false //时间更改成功的标志
 						
 						setTimeout(()=>{
 							uni.hideLoading() //超时关闭加载
@@ -313,12 +312,10 @@
 								})
 							}
 						},10000)
-						let count = 0
-						let alter_success = false //时间更改成功的标志
+						
 						getApp().writeValueToBle(msg,str=>{
 							if(count<this.deviceArr.length*2){
 								if(str.search("[OK]")!=-1){  //返回的数据带有[OK],表明时间修改成功
-									console.log("判断返回的数据是否带有[OK]")
 									uni.hideLoading()  //主动关闭加载
 									uni.showToast({
 										title:"修改成功",
@@ -356,33 +353,29 @@
 
 			},
 			test(){ 
+
+				getApp().globalData.deviceArr.push({address:3,type:0,param:9})
+				getApp().globalData.deviceArr.push({address:6,type:0,param:6})
+				getApp().globalData.deviceArr.push({address:16,type:0,param:4})
+				console.log('头数据接收完成')
+				
 				setTimeout(()=>{
-						getApp().globalData.deviceArr.push({address:3,type:0,param:9})
+					getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:3.764,testTime:3,interval:2})
+					setInterval(()=>{
+						getApp().globalData.valueArr.push(
+							{param:9,address:3,value:80+Math.round(Math.random()*5),temperature:23.4,mud:3.4,bod:3.3,electric:3.764},
+							// {temperature:20+Math.round(10*Math.random()),val1:5,val2:5,val3:Math.round(100*Math.random()),val4:Math.round(100*Math.random()),val5:Math.round(100*Math.random()),val6:3,val7:2,val8:32,electric:3.764}
+						)
+						setTimeout(()=>{
+							getApp().globalData.valueArr.push({param:6,address:6,value:50+Math.round(Math.random()*5),temperature:23.4,electric:3.764})
+							setTimeout(()=>{
+								getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:3.764})
+							},1000)
+						},1000)
+					},3000)
 				},1500)
 				
-				setTimeout(()=>{
-						getApp().globalData.deviceArr.push({address:6,type:0,param:6})
-						getApp().globalData.deviceArr.push({address:16,type:0,param:4})
-						console.log('头数据接收完成')
-				
-				},2000)
-				
-				setTimeout(()=>{
-				
-						getApp().globalData.valueArr.push({param:4,address:16,value:Math.round(Math.random()*100),electric:3.764,testTime:3,interval:2})
-					
-				},2500)
-				
-				setInterval(()=>{
-					
-					getApp().globalData.valueArr.push(
-						{param:9,address:3,value:Math.round(Math.random()*100),temperature:23.4,mud:3.4,bod:3.3,electric:3.764},
-						{param:6,address:6,value:Math.round(Math.random()*100),temperature:23.4,electric:3.764},
-						{param:4,address:16,value:Math.round(Math.random()*100),electric:3.764}
-						// {temperature:20+Math.round(10*Math.random()),val1:5,val2:5,val3:Math.round(100*Math.random()),val4:Math.round(100*Math.random()),val5:Math.round(100*Math.random()),val6:3,val7:2,val8:32,electric:3.764}
-					)
-					
-				},3000)
+
 			},
 			setChart(){
 				
@@ -520,6 +513,9 @@
 				this.setChart()
 			},
 			valueArr(){ //valueArr加入新数据后，要对相应折线图的数据重新赋值
+				if(this.homeConfig.waitFirstValue){ //如果等待花括号数据的加载动画还在显示，则关闭
+					this.homeConfig.waitFirstValue = false
+				}
 				if(this.deviceArr[0] && this.deviceArr[0].type == 1){ //接多参数的情况,多参数的情况下设备列表只能有一支
 					//给多参数折线图chartdata赋值的逻辑写在这里
 					if(this.valueArr.length==1){ //从无到有的第一条，要设置一次电量
@@ -611,6 +607,7 @@
 		background-image: url('../../static/background.jpg'); //小程序下背景无效
 		background-size: 100% auto;
 		background-repeat: no-repeat;
+		min-height: 500rpx;
 	}
 	
 	.flex_row_between{

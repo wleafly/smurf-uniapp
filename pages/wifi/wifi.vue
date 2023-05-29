@@ -92,7 +92,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					  }
 					})
 					getApp().globalData.isFirstData = true //重新连接后，数据页要从第一条记录开始算了
-					// getApp().globalData.firstLoading = true //重新连接后，数据页要发f900了，把firstLoading 设置为 true才行 
+					getApp().globalData.firstLoading = false //断开连接后，进数据页就不要发f900了
 				}
 				
 			
@@ -166,7 +166,8 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 														getApp().globalData.includeParamArr = [] //二次连接时，也要清除历史数据，这样进入历史数据页就能重新发f6指令了
 														getApp().globalData.normalValueArr = []
 														getApp().globalData.manyParamValueArr = []
-
+														getApp().globalData.addressToParamMap = []
+														
 														getApp().globalData.deviceName = that.blueToothList[index].name
 														getApp().globalData.deviceCoreData = { //存储各种id到全局变量，其他页面也要用
 															deviceId:deviceId,
@@ -319,7 +320,11 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 								  success:(res)=> {
 									console.log("重启notify服务成功")
 									//执行到这一步才能写数据
-									that.$set(that.blueToothStateArr,that.usedDeviceIndex,2) //重连成功，将按钮文字重新改为断开															
+									that.$set(that.blueToothStateArr,that.usedDeviceIndex,2) //重连成功，将按钮文字重新改为断开			
+									uni.showToast({
+										title:'重连成功',
+										icon:'none'
+									})
 								  },
 								  fail:(res)=> {
 									// console.log(res.errMsg)

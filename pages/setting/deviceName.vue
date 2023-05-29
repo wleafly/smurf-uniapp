@@ -1,6 +1,6 @@
 <template>
 	<view class="outer">
-		<input :placeholder="i18n('deviceName_input')" v-model="content" class="input">
+		<input :placeholder="i18n('deviceName_input')" v-model:value="content" class="input">
 
 		<text style="margin-left: 10rpx; font-size: 22rpx; color: #bdc3c7;">{{$t('deviceName_label')}}</text>
 		<button @click="modify" class="btn">{{$t('deviceName_button')}}</button>

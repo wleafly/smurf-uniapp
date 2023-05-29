@@ -58,8 +58,11 @@
 				includeParamArr:[],  //集合，历史数据中包含的参数类型id
 				normalValueArr:[],
 				manyParamValueArr:[],  
-				paramArr:["","DDM_μ","DDM_m","PHG","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
-				unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
+				paramArr:getApp().globalData.paramArr,
+				unitArr:getApp().globalData.unitArr,
+				// paramArr:["","DDM_μ","DDM_m","PH","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
+				// paramArr:["","电导率","电导率","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
+				// unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
 				chartData: {
 					categories:[],
 					series: [
@@ -106,14 +109,12 @@
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 		},
 		onShow() {
-			console.log("执行了onshow方法")
-
 			if(this.normalValueArr.length ==0 && this.manyParamValueArr.length ==0){ //历史数据没存过，自动发f6指令，询问用户要不要读数据
 				let that = this
 				getApp().writeValueToBle("F6",str=>{
-					console.log(str,str.length,typeof str)
-					if(str.startsWith("[")&&str.endsWith("]")){
-						let count = parseInt(str.substring(1,str.length-1))
+					// console.log(str,str.length,typeof str)
+					if(str.indexOf("[")!=-1 && str.indexOf("]")!=-1){
+						let count = parseInt(str.split("[")[1].split("]")[0])
 						if(count && typeof count == "number"){
 							if(count<200){
 								getApp().writeValueToBle("FB",str=>{

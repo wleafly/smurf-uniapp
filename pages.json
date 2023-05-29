@@ -66,7 +66,7 @@
             "path" : "pages/setting/download",
             "style" :                                                                                    
             {
-                "navigationBarTitleText": "",
+                "navigationBarTitleText": "下载内容",
                 "enablePullDownRefresh": false
             }
             

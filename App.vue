@@ -24,8 +24,8 @@
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
 			
-			paramArr:["多参数","电导率","电导率","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
-			unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
+			paramArr:["多参数","电导率1","电导率2","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
+			unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L","mg/L"],
 			// deviceArr:[
 			// 	{
 			// 		address:3,
@@ -66,10 +66,13 @@
 			// 	{param:6,address:6,value:27.4,temperature:23.5,electric:3.763},//一般类型
 			// 	{param:4,address:16,value:55,electric:3.763}//ORP，不带温度
 			// ],
+			homeConfig:{ 
+				waitFirstValue:false//控制首页设备名右侧是否显示加载动画
+			},
 			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
 			tempStr:"", //临时数据，存储不完整的蓝牙数据
 			isFirstData:true,
-			isNewDevice:false,
+			isNewDevice:true,
 			oldParamId:null,
 			addressToParamMap:[],
 			firstLoading:true,//代表进入数据页是否要发f900
@@ -166,6 +169,7 @@
 			},
 			handleStrFromBlueTooth(result){
 				console.log("收到数据:"+result)
+				result = result.replace(",,",",") //处理固件升级造成的连续逗号bug
 				if(result.charAt(0)=='[' && result.search(",")!=-1){ //[6,0,6,]格式的设备类型
 					result = result.slice(1,result.length-1)
 					let resultArr = result.split(',')
@@ -182,6 +186,8 @@
 						//在数组中添加地址和参数id的映射关系
 						getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2])
 						getApp().globalData.oldParamId = parseInt(resultArr[2]) //存下当前的参数类型，若是老设备，接收的值不带地址，可以利用这个变量
+					}else{
+						getApp().globalData.homeConfig.waitFirstValue = true //重新f900时，如果设备重复，显示名称右边的加载动画
 					}
 				
 					// let deviceStr = JSON.stringify(device)
@@ -198,7 +204,7 @@
 				}else if(result.charAt(result.length-1)!='}'){ //数据过长，对数据进行拼接
 					getApp().globalData.tempStr = result //前半截数据
 				}else if(result.charAt(0)!='{' && result.search("}")!=-1){ //第一位不是'{',且含有'}',说明是长数据的后半截
-					if(result.endsWith("}[OK]") || result.endsWith("}[Error]")){ //f900后fc可能会出现的情况
+					if(result.endsWith("}[OK]") || result.endsWith("}[Error]")){ //f900后发fc等指令可能会出现的情况
 						console.log("接收到了后半截数据带[OK]或[Error]的情况")
 						result = result.split("[")[0]
 					}
@@ -212,16 +218,18 @@
 						this.judgeNewOrOld()
 						this.storageValue(getApp().globalData.tempStr.map(Number)) //.map(Number)可以将字符串数组转为数字类型的数组
 					}
+				}else if(result=='[OK]'||result=='[Error]'){
+					console.log("获取到的是判断结果"+result)
 				}else{ //由于较短，可单行获取的完整数据
-			
 					getApp().globalData.tempStr = result.slice(1,result.length-2).split(',')
 					console.log("处理后的数据：",getApp().globalData.tempStr)
 					if(getApp().globalData.deviceArr.length>0){
 						this.judgeNewOrOld()
 						this.storageValue(getApp().globalData.tempStr.map(Number))
 					}
-			
 				}
+				
+
 					
 			},
 			judgeNewOrOld(){  //判断是新设备还是老设备

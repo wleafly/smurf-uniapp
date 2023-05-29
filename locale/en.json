@@ -50,6 +50,7 @@
 	"troubleShoot":"Troubleshoot",
 	"language":"Language",
 	"setting":"Setting",
+	"cache":"Download",
 	
 	"interval_input":"Please enter a new interval",
 	"test_input":"Please enter a new test time",

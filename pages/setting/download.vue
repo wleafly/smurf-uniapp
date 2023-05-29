@@ -100,7 +100,7 @@
 				tableData:[],
 				manyParamsDefault:["COD","COD内置浊度","电导率/盐度","pH","ORP","溶解氧","铵氮/离子类","浊度"],
 				unitMap:new Map([["COD","mg/L"],["COD内置浊度","NTU"],["电导率/盐度","mS/cm"],["pH",""],["PH",""],["ORP","mV"],["溶解氧","mg/L"],["铵氮/离子类","mg/L"],["浊度","NTU"],
-				["电导率","mS/cm",""],["盐度","PSU"],["余氯","mg/L"],["叶绿素","μg/L"],["蓝绿藻","Kcells/mL"],["透明度","mm"],["悬浮物","mg/L"],["水中油","mg/L"],["未连接",""]]),
+				["电导率","mS/cm"],["盐度","PSU"],["余氯","mg/L"],["叶绿素","μg/L"],["蓝绿藻","Kcells/mL"],["透明度","mm"],["悬浮物","mg/L"],["水中油","mg/L"],["未连接",""]]),
 				manyParamsActive:null
 
 			}
@@ -316,7 +316,7 @@
 					this.dateArr.unshift(key)
 				}
 			}
-			console.log(this.dateArr)
+			// console.log(this.dateArr)
 			
 			this.paramArr = getApp().globalData.paramArr
 			this.unitArr = getApp().globalData.unitArr

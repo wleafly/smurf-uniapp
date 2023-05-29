@@ -13,7 +13,7 @@
 				icon="/static/多语言.png"></u-cell>
 			<u-cell :title="i18n('setting')" size="large" isLink :clickable="true" url="/pages/setting/set"
 				icon="/static/系统设置.png"></u-cell>
-			<u-cell title="下载内容" size="large" isLink :clickable="true" url="/pages/setting/download"
+			<u-cell :title="i18n('cache')" size="large" isLink :clickable="true" url="/pages/setting/download"
 				icon="/static/下载.png"></u-cell> 
 		</u-cell-group>
 

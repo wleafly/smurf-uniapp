@@ -1,93 +1,131 @@
 <template>
-	<view class="container">
-		
-		<view class="input_container">
-			<view class="row" style="margin: 25rpx;" >
-				<text style="width: 170rpx;">{{$t('deviceAddress')}}</text>
-				<input :placeholder="i18n('address_input')" v-model="deviceAddress" class="input" style="">
-			</view>
-			<view class="line" style="margin-top: 40rpx;"></view>
-			<view class="row" style="margin: 25rpx;">
-				<text style="width: 170rpx;">{{$t('temp')}}</text>
-				<input :placeholder="i18n('temp_input')" v-model="temp_calibration" class="input">
-				<button class="btn_write" @click="temp_modify">{{$t('write_button')}}</button>
-			</view>
+	<view style="padding: 20rpx;">
+		<view v-if="deviceArr.length==0" class="remind_connect">
+			<loading txt="正在获取设备"></loading>
 		</view>
-		
-		<view v-show="param=='0' && typeId!='3'" class="input_container">
-			<view class="row" style="margin: 30rpx; height: 50rpx;">
-				<text style="width: 240rpx;">{{$t('zero')}}</text>
-				<input :placeholder="i18n('zero_input')" v-model="zero_calibration" class="input" style="">
-				<button class="btn_write" @click="zero_modify">{{$t('write_button')}}</button>
+		<view v-for="device,index in deviceArr" class="box">
+			<!-- 单参数的情况,param在10以后的设备没有校准指令，暂时不显示 -->
+			<view v-if="device.type==0 && device.param<10">
+				<view class="row" style="padding-top: 20rpx;font-size: 35rpx;font-weight: bold;color: gray;">
+					<view>{{paramArr[device.param]}}</view>
+					<u-icon v-if="deviceArr.length>1" :name="formFlap[index]?'arrow-down':'arrow-up'"
+						@click="showOrFlap(index)"></u-icon>
+				</view>
+
+				<view v-if="!formFlap[index]" style="border-top: 1rpx solid lightgray;margin-top: 20rpx;">
+					<view class="row">
+						<view>设备地址</view>
+						<view style="width: 50%;">{{device.address}}</view>
+						<view class="button" @click="alterAddress(device.address,index)">更改</view>
+					</view>
+					<view v-if="device.param!=4" class="row">
+						<view>温度校准</view>
+						<input type="number" class="input" v-model:value="temperatureArr[index]" placeholder="请输入实际温度"/>
+						<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">写入</view>
+					</view>
+					<view v-if="device.param!=3" class="row">
+						<view>零点校准</view>
+						<input type="number" class="input" v-model:value="zeroArr[index]" />
+						<view class="button" @click="adjustValue(device.address,zeroArr[index],'零点',device.param)">写入
+						</view>
+					</view>
+					<view v-else class="row">
+						<view>零点校准</view>
+						<view style="width: 50%;">6.86</view>
+						<view class="button" @click="adjustValue(device.address,'0','零点',device.param)">写入</view>
+					</view>
+					<view v-if="device.param!=3" class="row">
+						<view>斜率校准</view>
+						<input type="number" class="input" v-model:value="slopeArr[index]" />
+						<view class="button" @click="adjustValue(device.address,slopeArr[index],'斜率',device.param)">写入
+						</view>
+					</view>
+					<view v-else class="row">
+						<view>斜率校准</view>
+						<view class="button" @click="selectPH4=true"
+							style="width: 25%;border: 1rpx solid lightgrey;color: black;"
+							:style="selectPH4?'background-color: #ddd':'background-color: transparent;'">4.00</view>
+						<view class="button" @click="selectPH4=false"
+							style="width: 25%;border: 1rpx solid lightgrey;color: black;"
+							:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
+						<view class="button" @click="adjustValue(device.address,'0','斜率',device.param)">写入</view>
+					</view>
+
+					<view v-if="device.param==9">
+						<view class="row" style="border-top: 1rpx solid #eee;padding-top: 20rpx;">
+							<view>浊度零点校准</view>
+							<input type="number" class="input" style="width: 40%;" v-model:value="mudZeroArr[index]" />
+							<view class="button" @click="adjustValue(device.address,mudZeroArr[index],'浊度零点')">写入</view>
+						</view>
+						<view class="row">
+							<view>浊度斜率校准</view>
+							<input type="number" class="input" style="width: 40%;" v-model:value="mudSlopeArr[index]" />
+							<view class="button" @click="adjustValue(device.address,mudSlopeArr[index],'浊度斜率')">写入
+							</view>
+						</view>
+					</view>
+				</view>
+
+
 			</view>
-			<view class="line"></view>
-			<view class="row" style="margin: 25rpx;">
-				<text style="width: 240rpx;">{{$t('slope')}}</text>
-				<input :placeholder="i18n('slope_input')" v-model="slope_calibration" class="input">
-				<button class="btn_write" @click="slope_modify">{{$t('write_button')}}</button>
+			<!-- 多参数的情况 -->
+			<view v-else-if="device.type==1">
+				<view class="row"
+					style="padding: 20rpx 0;font-size: 35rpx;font-weight: bold;color: gray;border-bottom: 1rpx solid lightgray;">
+					<view>多参数</view>
+				</view>
+				<view class="row">
+					<view>设备地址</view>
+					<view style="width: 50%;">{{device.address}}</view>
+					<view class="button" @click="alterAddress(device.address,index)">更改</view>
+				</view>
+				<view class="row">
+					<view>温度校准</view>
+					<input type="number" class="input" v-model:value="temperatureArr[index]" placeholder="请输入实际温度"/>
+					<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">写入</view>
+				</view>
+				<view class="row">
+					<view>参数选择</view>
+					<picker class="input" @change="manyParamsBindChange" :range='manyParamsOptionArr'>
+						<view style="display: flex;justify-content: space-between;">
+							<view>{{manyParamsOption>=0?manyParamsOptionArr[manyParamsOption]:"请选择参数"}}</view><u-icon
+								name="arrow-down"></u-icon>
+						</view>
+					</picker>
+					<view class="button" style="background-color: transparent;"></view>
+				</view>
+				<view v-if="manyParamsOption!=3" class="row">
+					<view>零点校准</view>
+					<input type="number" class="input" v-model:value="zeroArr[index]" />
+					<view class="button" @click="adjustManyParams(device.address,zeroArr[index],'零点')">写入</view>
+				</view>
+				<view v-else class="row">
+					<view>零点校准</view>
+					<view style="width: 50%;">6.86</view>
+					<view class="button" @click="adjustValue(device.address,'0','零点',3)">写入</view>
+				</view>
+				<view v-if="manyParamsOption!=3" class="row">
+					<view>斜率校准</view>
+					<input type="number" class="input" v-model:value="slopeArr[index]" />
+					<view class="button" @click="adjustManyParams(device.address,slopeArr[index],'斜率')">写入</view>
+				</view>
+				<view v-else class="row">
+					<view>斜率校准</view>
+					<view class="button" @click="selectPH4=true"
+						style="width: 25%;border: 1rpx solid lightgrey;color: black;"
+						:style="selectPH4?'background-color: #ddd':'background-color: transparent;'">4.00</view>
+					<view class="button" @click="selectPH4=false"
+						style="width: 25%;border: 1rpx solid lightgrey;color: black;"
+						:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
+					<view class="button" @click="adjustValue(device.address,'0','斜率',3)">写入</view>
+				</view>
+
 			</view>
+
+
 		</view>
-		
-		<view v-show="typeId=='3'" class="input_container">
-		<!-- <view class="input_container"> -->
-			<view class="row" style="margin: 30rpx; height: 50rpx;">
-				<text style="width: 240rpx;">{{$t('zero')}}</text>
-				<text @click="show_pH_zero = true">{{pH_zero}}</text>
-				<button class="btn_write" style="margin-left: 200rpx; width: 165rpx;" @click="zero_modify">{{$t('write_button')}}</button>
-			</view>
-			<view class="line"></view>
-			<view class="row" style="margin: 25rpx;">
-				<text style="width: 240rpx;">{{$t('slope')}}</text>
-				<text  @click="show_pH_slope = true">{{pH_slope}}</text>
-				<button class="btn_write" style="margin-left: 200rpx; width: 165rpx;" @click="slope_modify">{{$t('write_button')}}</button>
-			</view>
-		</view>
-		
-		<view v-show="typeId=='9'" class="input_container" style="height: 280rpx;">
-			<view style="margin: 20rpx;">{{$t('COD_ZS')}}</view>
-			<view class="row" style="margin: 25rpx; height: 50rpx;" >
-				<text style="width: 240rpx;">{{$t('zero')}}</text>
-				<input :placeholder="i18n('zero_input')" v-model="COD_zero_calibration" class="input" style="">
-				<button class="btn_write" @click="COD_zero_modify">{{$t('write_button')}}</button>
-			</view>
-			<view class="line"></view>
-			<view class="row" style="margin: 25rpx;">
-				<text style="width: 240rpx;">{{$t('slope')}}</text>
-				<input :placeholder="i18n('slope_input')" v-model="COD_slope_calibration" class="input">
-				<button class="btn_write" @click="COD_slope_modify">{{$t('write_button')}}</button>
-			</view>
-		</view>
-		
-		<!-- 多参数 -->
-		<view v-show="param=='1'" class="input_container" style="margin: 25rpx; height: 340rpx;">
-			<view class="row" style="margin: 25rpx; height: 50rpx;" @click="show = true" >
-				<text style="width: 140rpx;">{{$t('calibrationSelection')}}</text>
-				<text>{{mul_text}}</text>
-			</view>
-			<view class="line"></view>
-			<view class="row" style="margin: 25rpx; height: 50rpx;" >
-				<text style="width: 240rpx;">{{$t('zero')}}</text>
-				<input :placeholder="i18n('zero_input')" v-model="mul_zero_calibration" class="input" style="">
-				<button class="btn_write" @click="mul_zero_modify">{{$t('write_button')}}</button>
-			</view>
-			<view class="line"></view>
-			<view class="row" style="margin: 25rpx;  height: 50rpx;">
-				<text style="width: 240rpx;">{{$t('slope')}}</text>
-				<input :placeholder="i18n('slope_input')" v-model="mul_slope_calibration" class="input">
-				<button class="btn_write" @click="mul_slope_modify">{{$t('write_button')}}</button>
-			</view>
-		</view>
-		
-		<u-picker :show="show" :columns="columns" @confirm="confirm" @cancel="cancel"></u-picker>
-		<u-picker :show="show_pH_zero" :columns="columns_pH_zero" @confirm="confirm_pH_zero" @cancel="cancel"></u-picker>
-		<u-picker :show="show_pH_slope" :columns="columns_pH_slope" @confirm="confirm_pH_slope" @cancel="cancel"></u-picker>
-		<view>
-			<!-- 提示窗 -->
-			<uni-popup ref="alertDialog" type="dialog">
-				<uni-popup-dialog :type="msgType" :cancelText="i18n('cancel')" content="i18n('successful')"
-					@confirm="dialogConfirm" @close="dialogClose"></uni-popup-dialog>
-			</uni-popup>
-		</view>
+
+
 	</view>
 </template>
 
@@ -95,416 +133,370 @@
 	export default {
 		data() {
 			return {
-				deviceAddress:'',
-				typeId:'',
-				param:'',
-				deviceId:'',
-				serviceId:'',
-				notifyCharacteristicId:'',
-				writeCharacteristicId:'',
-				zero_calibration:'',
-				slope_calibration:'',
-				COD_zero_calibration:'',
-				COD_slope_calibration:'',
-				mul_zero_calibration:'',
-				mul_slope_calibration:'',
-				pH_zero:'6.86',
-				pH_slope:'4.00',
-				temp_calibration:'',
-				type: 'center',
-				msgType: 'success',
-				mul_text:'COD',
-				
-				show: false,
-                columns: [
-                    ['COD', '浊度(COD)', '电导率','pH','ORP','溶解氧','铵氮/离子类','浊度','盐度','余氯','叶绿素','蓝绿藻','透明度','悬浮物','水中油']
-                ],
-				
-				show_pH_zero:false,
-				columns_pH_zero: [
-				    ['6.86']
-				],
-				
-				show_pH_slope:false,
-				columns_pH_slope: [
-				    ['4.00','9.18']
-				],
+				isNewDevice: getApp().globalData.isNewDevice,
+				deviceArr: getApp().globalData.deviceArr,
+				temperatureArr: [],
+				zeroArr: [],
+				slopeArr: [],
+				mudZeroArr: [],
+				mudSlopeArr: [],
+				paramArr: getApp().globalData.paramArr,
+				formFlap: [], //控制表单显示与折叠,false代表显示，所以默认都显示
+				selectPH4: true, //校准ph时用的
+				zeroAdjustArr: ["", "fe0606", "fe0606", "fe0608", "fe060a", "fe060c", "fe060e", "fe0610", "fe0606",
+					"fe0602"
+				], //零点校准的指令列表，索引和param对应
+				slopeAdjustArr: ["", "fe0607", "fe0607", "fe0609", "fe060b", "fe060d", "fe060f", "fe0611", "fe0607",
+					"fe0603"
+				], //斜率校准的指令列表
+				manyParamsOptionArr: ["COD", "COD内置浊度", "电导率", "pH", "ORP", "溶解氧", "铵氮/离子类", "浊度", "盐度"],
+				manyParamsOption: -1,
+				isShowLoading: true
 			}
 		},
-		onShow(){
-			// let that = this
-			// this.deviceId=getApp().globalData.deviceCoreData.deviceId
-			// this.serviceId=getApp().globalData.deviceCoreData.serviceId
-			// this.notifyCharacteristicId=getApp().globalData.deviceCoreData.notifyCharacteristicId
-			// this.writeCharacteristicId=getApp().globalData.deviceCoreData.writeCharacteristicId
-			// uni.getStorage({
-			// 	key:'device',
-			// 	success(res) {
-			// 		that.deviceAddress = res.data.deviceAddress
-			// 		that.typeId = res.data.typeId
-			// 		that.param = res.data.param
-			// 		// console.log(that.typeId)
-			// 	},fail(err) {
-					
-			// 	}
-			// })
-		},
 		methods: {
-			//为控件的属性动态绑定内容
-			i18n(key) {
-			    return this.$i18n.messages[this.$i18n.locale][key]
-			},
-			dialogToggle(type) {
-				this.msgType = type
-				this.$refs.alertDialog.open()
-			},
-			dialogConfirm() {
-				console.log('点击确认')
-			},
-			dialogClose() {
-				console.log('点击关闭')
-			},
-			confirm(e){
-				this.mul_text = e.value[0]
-				this.show = false
-			},
-			confirm_pH_zero(e){
-				this.pH_zero = e.value[0]
-				this.show_pH_zero = false
-			},
-			confirm_pH_slope(e){
-				this.pH_slope = e.value[0]
-				this.show_pH_slope = false
-			},
-			cancel(e){
-				this.show = false
-				this.show_pH_zero = false
-				this.show_pH_slope = false
-			},
-			
-				// 启用 notify 功能
-				notifyBLECharacteristicValueChange(){
-					let that = this
-					uni.notifyBLECharacteristicValueChange({
-					  state: true, // 启用 notify 功能
-					  deviceId:this.deviceId,
-					  serviceId:this.serviceId,
-					  characteristicId:this.notifyCharacteristicId,
-					  success:(res)=> {
-						console.log("启动notify功能成功")
-					  },
-					  fail:(res)=> {
-						console.log('fail', res.errMsg)
-					  }
+			adjustManyParams(address, value, type) {
+				let param = this.manyParamsOption
+				if (param > -1) {
+					if (param == 0) {
+						this.adjustValue(address, value, type, 9) //manyParamsOptionArr第0位是cod
+					} else if (param == 1) {
+						this.adjustValue(address, value, "浊度" + type)
+					} else {
+						this.adjustValue(address, value, type, this.manyParamsOption)
+					}
+				} else {
+					uni.showToast({
+						icon: 'none',
+						title: '请选择参数'
 					})
-				},
-				//通过蓝牙向设备发送数据
-				send(msg){
-					
-					var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {
-						return parseInt(h, 16)
-						}))
-					var buffer = typedArray.buffer
-					
-					let that = this
-					
-					uni.writeBLECharacteristicValue({
-						deviceId:this.deviceId,
-						serviceId:this.serviceId,
-						characteristicId:this.writeCharacteristicId,
-						value:buffer,
-						success(res) {
-							uni.showToast({icon:'none',title: "数据发送成功"})
-							// console.log(res)
-							console.log("数据发送成功")
-							that.listenValueChange()
-						},
-						fail(err) {
-							console.error(err)
-							uni.showToast({icon:'none',title: "数据发送失败"})
-							console.log("数据发送失败")
-						}
-					})
-				},
-				//监听数据变化
-				listenValueChange() {
-					let res2 = {
-						categories: this.categories2,
-						series: this.series2,
-					};
-					let that = this
-				    uni.onBLECharacteristicValueChange(res => {
-				        let resHex = this.ab2hex(res.value)
-				        // this.messageHex.value = resHex
-						console.log('resHex',resHex)
-				        let result = this.hexCharCodeToStr(resHex)
-						console.log(result)
-						result = String(result)
-						if(result == '[OK]'){
-							console.log('修改成功')
-							this.dialogToggle('success')
-						}
-				    })
-				},
-				// ArrayBuffer转16进制字符串
-				ab2hex(buffer) {
-				    const hexArr = Array.prototype.map.call(
-				        new Uint8Array(buffer),
-				        function(bit) {
-				            return ('00' + bit.toString(16)).slice(-2)
-				        }
-				    )
-				    return hexArr.join('')
-				},
-				// 将16进制转成字符串
-				hexCharCodeToStr(hexCharCodeStr) {
-				    var trimedStr = hexCharCodeStr.trim();
-				    var rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
-				    var len = rawStr.length;
-				    if (len % 2 !== 0) {
-				        alert("存在非法字符!");
-				        return "";
-				    }
-				    var curCharCode;
-				    var resultStr = [];
-				    for (var i = 0; i < len; i = i + 2) {
-				        curCharCode = parseInt(rawStr.substr(i, 2), 16);
-				        resultStr.push(String.fromCharCode(curCharCode));
-				    }
-				    return resultStr.join("");
-				},		
-				
-				temp_modify(){	
-					//将时间转为十六进制格式
-					let temp_calibration_hex = Number(this.temp_calibration).toString(16)
-					if(temp_calibration_hex.length==1){
-						temp_calibration_hex = '000'+temp_calibration_hex
-					}else if(temp_calibration_hex.length==2){
-						temp_calibration_hex = '00'+temp_calibration_hex
-					}else if(temp_calibration_hex.length==3){
-						temp_calibration_hex = '0'+temp_calibration_hex
-					}
-					if(this.param=='1'){
-						let msg = 'FE0600'+temp_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else{
-						let msg = 'FE0610'+temp_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}
-					
-				},
-				
-				zero_modify(){
-					//将时间转为十六进制格式
-					let zero_calibration_hex = Number(this.zero_calibration).toString(16)
-					if(zero_calibration_hex.length==1){
-						zero_calibration_hex = '000'+zero_calibration_hex
-					}else if(zero_calibration_hex.length==2){
-						zero_calibration_hex = '00'+zero_calibration_hex
-					}else if(zero_calibration_hex.length==3){
-						zero_calibration_hex = '0'+zero_calibration_hex
-					}
-					let msg = 'FE0600' + zero_calibration_hex
-					console.log(msg)
-					this.send(msg)
-				},
-				
-				slope_modify(){
-					//将时间转为十六进制格式
-					let slope_calibration_hex = Number(this.slope_calibration).toString(16)
-					if(slope_calibration_hex.length==1){
-						slope_calibration_hex = '000'+slope_calibration_hex
-					}else if(slope_calibration_hex.length==2){
-						slope_calibration_hex = '00'+slope_calibration_hex
-					}else if(slope_calibration_hex.length==3){
-						slope_calibration_hex = '0'+slope_calibration_hex
-					}
-					let msg = 'FE0604' + slope_calibration_hex
-					console.log(msg)
-					this.send(msg)
-				},
-				
-				pH_zero_modify(){
-					//将时间转为十六进制格式
-					if(pH_zero == '6.86'){
-						let msg = 'FE06000000'
-						console.log(msg)
-						this.send(msg)
-					}
-				},
-				pH_slope_modify(){
-					if(pH_slope == '4.00'){
-						let msg = 'FE06020000'
-						console.log(msg)
-						this.send(msg)
-					}
-				},
-				
-				COD_zero_modify(){
-					let COD_zero_calibration_hex = Number(this.COD_zero_calibration).toString(16)
-					if(COD_zero_calibration_hex.length==1){
-						COD_zero_calibration_hex = '000'+COD_zero_calibration_hex
-					}else if(COD_zero_calibration_hex.length==2){
-						COD_zero_calibration_hex = '00'+COD_zero_calibration_hex
-					}else if(COD_zero_calibration_hex.length==3){
-						COD_zero_calibration_hex = '0'+COD_zero_calibration_hex
-					}
-					let msg = 'FE0620'+COD_zero_calibration_hex
-					this.send(msg)
-				},
-				COD_slope_modify(){
-					let COD_slope_calibration_hex = Number(this.COD_slope_calibration).toString(16)
-					if(COD_slope_calibration_hex.length==1){
-						COD_slope_calibration_hex = '000'+COD_slope_calibration_hex
-					}else if(COD_slope_calibration_hex.length==2){
-						COD_slope_calibration_hex = '00'+COD_slope_calibration_hex
-					}else if(COD_slope_calibration_hex.length==3){
-						COD_slope_calibration_hex = '0'+COD_slope_calibration_hex
-					}
-					let msg = 'FE0624'+COD_slope_calibration_hex
-					this.send(msg)
-				},
-				mul_zero_modify(){
-					let mul_zero_calibration_hex = Number(this.mul_zero_calibration).toString(16)
-					if(mul_zero_calibration_hex.length==1){
-						mul_zero_calibration_hex = '000'+mul_zero_calibration_hex
-					}else if(mul_zero_calibration_hex.length==2){
-						mul_zero_calibration_hex = '00'+mul_zero_calibration_hex
-					}else if(mul_zero_calibration_hex.length==3){
-						COD_zerocalibration_hex = '0'+mul_zero_calibration_hex
-					}
-					
-					if(this.mul_text == 'COD'){
-						let msg = 'FE0602'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '浊度(COD)'){
-						let msg = 'FE0604'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '电导率'){
-						let msg = 'FE0606'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == 'pH'){
-						let msg = 'FE0608'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == 'ORP'){
-						let msg = 'FE060A'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '溶解氧'){
-						let msg = 'FE060C'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '铵氮/离子类'){
-						let msg = 'FE060E'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '浊度'){
-						let msg = 'FE0610'+mul_zero_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}
-				},
-				mul_slope_modify(){
-					let mul_slope_calibration_hex = Number(this.mul_slope_calibration).toString(16)
-					if(mul_slope_calibration_hex.length==1){
-						mul_slope_calibration_hex = '000'+mul_slope_calibration_hex
-					}else if(mul_slope_calibration_hex.length==2){
-						mul_slope_calibration_hex = '00'+mul_slope_calibration_hex
-					}else if(mul_slope_calibration_hex.length==3){
-						mul_slope_calibration_hex = '0'+mul_slope_calibration_hex
-					}
-					
-					if(this.mul_text == 'COD'){
-						let msg = 'FE0603'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '浊度(COD)'){
-						let msg = 'FE0605'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '电导率'){
-						let msg = 'FE0607'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == 'pH'){
-						let msg = 'FE0609'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == 'ORP'){
-						let msg = 'FE060B'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '溶解氧'){
-						let msg = 'FE060D'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '铵氮/离子类'){
-						let msg = 'FE060F'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}else if(this.mul_text == '浊度'){
-						let msg = 'FE0611'+mul_slope_calibration_hex
-						console.log(msg)
-						this.send(msg)
-					}
 				}
+
+			},
+			manyParamsBindChange(e) {
+				console.log(e.detail.value)
+				this.manyParamsOption = e.detail.value
+			},
+			showOrFlap(index) {
+				this.$set(this.formFlap, index, !this.formFlap[index])
+			},
+			alterAddress(address, index) {
+				let that = this
+				uni.showModal({
+					title: "提示",
+					editable: true,
+					placeholderText: "请输入新地址",
+					success(res) {
+						if (res.confirm) {
+							let newAddress = parseInt(res.content)
+							if (newAddress && newAddress > 0 && newAddress < 128) {
+								// console.log('新地址',newAddress)
+								//执行修改地址的逻辑
+								let newAddress_hex = newAddress.toString(16).length < 2 ? '0' + newAddress
+									.toString(16) : newAddress.toString(16)
+								// console.log("转化为16进制后",newAddress_hex)
+								let msg
+								if (that.isNewDevice) { //新设备改地址指令格式是 f+新地址+旧地址
+									let oldAddress_hex = address.toString(16).length < 2 ? '0' + address.toString(
+										16) : address.toString(16)
+									msg = 'f9' + newAddress_hex + oldAddress_hex
+								} else { //老设备改地址指令格式是 f+新地址
+									msg = 'f9' + newAddress_hex
+								}
+								console.log(msg)
+								uni.showLoading({
+									title: '更改中'
+								})
+								let alter_success = false //更改成功的标志
+								setTimeout(() => {
+									uni.hideLoading() //超时关闭加载
+									if (!alter_success) {
+										uni.showToast({
+											title: "更改失败，请重新发送",
+											icon: "none"
+										})
+									}
+								}, 10000)
+								//向蓝牙设备发送改地址指令
+								getApp().writeValueToBle(msg, str => {
+									console.log(str)
+									if (str.search("[OK]") != -1) {
+										uni.hideLoading() //主动关闭加载
+										uni.showToast({
+											title: "修改成功",
+											icon: "none"
+										})
+										alter_success = true
+										getApp().globalData.addressToParamMap[newAddress] = getApp()
+											.globalData.addressToParamMap[that.deviceArr[index].address]
+										that.deviceArr[index].address = newAddress
+										getApp().globalData.firstLoading = true
+									}
+									// if(str.search("[Error]")!=-1){
+									// 	uni.hideLoading()  //主动关闭加载
+									// 	uni.showToast({
+									// 		title:"更改失败，请重新发送",
+									// 		icon:"none"
+									// 	})
+									// }
+								})
+
+							} else {
+								uni.showToast({
+									icon: 'none',
+									title: '请输入1~127之间的数'
+								})
+							}
+						}
+
+					}
+				})
+
+			},
+			adjustValue(address, value, type, param) {
+				if (!value) {
+					uni.showToast({
+						icon: 'none',
+						title: '请输入值'
+					})
+					return
+				}
+				console.log('地址', address, '数值', value, '类型',type, '参数', param?param:'没传')
+				if (parseInt(value) >= 0 && parseInt(value) < 65536) {
+					if(type=='温度'){ //温度要乘10,写入设备的值是用户输入的10倍
+						if(value>80){
+							uni.showToast({
+								icon:'none',
+								title:'温度超出使用范围'
+							})
+							return
+						}else{
+							value = value*10
+						}
+					}
+					let value_hex = parseInt(value).toString(16)
+					let msg = ""
+					let value_hex_limit4 = "0000".slice(0, 4 - value_hex.length) + value_hex
+					console.log()
+					if(this.deviceArr[0].type == 1){ //多参数校准指令头
+						console.log("使用多参数指令")
+						switch (type) {
+							case '温度':
+								msg = "fe0600"
+								break
+							case '零点':
+								msg = this.zeroAdjustArr[param]
+								break
+							case '斜率':
+								msg = this.slopeAdjustArr[param]
+								break
+							case '浊度零点':
+								msg = "fe0604"
+								break
+							case '浊度斜率':
+								msg = "fe0605"
+								break
+						}
+					}else{ //单参数校准指令头
+						console.log("使用单参数指令")
+						switch (type) {
+							case '温度':
+								msg = "fe0610"
+								break
+							case '零点':
+								msg = "fe0600"
+								break
+							case '斜率':
+								msg = "fe0604"
+								break
+							case '浊度零点':
+								msg = "fe0620"
+								break
+							case '浊度斜率':
+								msg = "fe0624"
+								break
+						}
+					}
+
+					msg += value_hex_limit4
+					if (this.deviceArr.length>1) { //新设备单参数可能接多支，所以指令后面要加地址
+						msg += address.toString(16).length < 2 ? '0' + address.toString(16) : address.toString(16)
+					}
+					console.log(msg) //以后替换成向蓝牙发送的逻辑
+					uni.showLoading({
+						title: '校准中'
+					})
+					let alter_success = false //更改成功的标志
+					let get_error = false //是否手动[Error]
+					setTimeout(() => {
+						if (!alter_success && !get_error) {
+							uni.hideLoading() //超时关闭加载
+							uni.showToast({
+								title: "校准失败，请重新发送",
+								icon: "none"
+							})
+						}
+					}, 10000)
+					getApp().writeValueToBle(msg, str => {
+						// console.log(str)
+						getApp().handleStrFromBlueTooth(str) 
+						if (str.search("[OK]") != -1) {
+							uni.hideLoading() //主动关闭加载
+							uni.showToast({
+								title: "校准成功",
+								icon: "none"
+							})
+							alter_success = true
+							//校准成功后，数据会中断，所以立刻发起f900
+							getApp().writeValueToBle('F900',(str)=>{
+								getApp().globalData.firstLoading = false 
+								getApp().handleStrFromBlueTooth(str)
+							})
+							
+							// getApp().globalData.firstLoading = true
+						}
+						if(str.search("[Error]")!=-1){
+							get_error = true
+							uni.hideLoading()  //主动关闭加载
+							uni.showToast({
+								title: "校准失败，请重新发送",
+								icon: "none"
+							})
+						}
+					})
+
+				} else {
+					uni.showToast({
+						icon: 'none',
+						title: '请输入0~65535之间的数'
+					})
+				}
+			}
+
+		},
+		onLoad() {
+			if (getApp().globalData.deviceCoreData.deviceId) {
+				let that = this
+				uni.getConnectedBluetoothDevices({ //获取处于已连接状态的设备
+					success(res) {
+						let isConnect = false
+						for (let device of res.devices) {
+							if (device.deviceId == getApp().globalData.deviceCoreData.deviceId) {
+								isConnect = true
+							}
+						}
+						if (isConnect) {
+							if(that.deviceArr.length==0){ 
+								getApp().writeValueToBle('F900',(str)=>{
+									getApp().globalData.firstLoading = false  //这里发起f900后，数据页就不要发了
+									getApp().handleStrFromBlueTooth(str)
+								})
+							}
+						} else {
+							uni.showModal({
+								content: '设备连接已断开，请重新连接',
+								showCancel: false,
+								success(res) {
+									if (res.confirm) {
+										uni.navigateBack()
+									}
+								}
+							})
+						}
+					}
+				})
+			} else {
+				uni.showModal({
+					content: '设备未连接',
+					showCancel: false,
+					success(res) {
+						if (res.confirm) {
+							// uni.navigateBack()
+						}
+					}
+				})
+			}
+			// if(this.deviceArr.length)
+
+
+			// this.deviceArr = [{
+			// 		address: 3,
+			// 		type: 0,
+			// 		param: 9 //COD 
+			// 	},
+			// 	{
+			// 		address: 6,
+			// 		type: 0,
+			// 		param: 6 //ION,一般情况
+			// 	},
+			// 	{
+			// 		address: 7,
+			// 		type: 0,
+			// 		param: 4 //ORP，不带温度
+			// 	},
+			// 	{
+			// 		address: 8,
+			// 		type: 0,
+			// 		param: 3 //pH，斜率校准用按钮
+			// 	}
+			// ]
+
+			// this.deviceArr=[
+			// 	{
+			// 		address:3,
+			// 		type:1,//多参数假数据
+			// 		param:4
+			// 	}
+			// ]
 		}
 	}
 </script>
 
 <style>
-	page{
-		background: #ecf0f1;	
+	page {
+		background-color: #EFEFEF;
 	}
-	
-	.row{
+
+	.button {
+		background-color: #89B7EC;
+		color: white;
+		border-radius: 10rpx;
+		padding: 10rpx 0;
+		width: 20%;
+		text-align: center;
+	}
+
+	.row {
 		display: flex;
-		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 20rpx;
 	}
-	
-	.input{
+
+	.box {
+		background-color: white;
+		border-radius: 20rpx;
+		padding: 0 20rpx;
+		margin-bottom: 20rpx;
+		padding-bottom: 20rpx;
+	}
+
+	.input {
 		width: 50%;
-		background-color: #ffffff;
+		border: 1px solid lightgrey;
+		border-radius: 5rpx;
+		padding: 10rpx
 	}
-	
-	.container {
-	    display: flex;
-	    flex-direction: column;
-	    align-items: center;
-	    justify-content: center;
-	  }
-	  
-	.input_container{
-		height: 220rpx;
-		width: 90%;
-		margin-top: 30rpx;
-		border-radius: 30rpx;
-		background-color: #ffffff;
-	}
-	
-	.btn{
-		margin-top: 100rpx;
-		width: 60%;
-		border-radius: 30rpx;
-		margin-left: 150rpx;
-	}
-	
-	.btn_write{
-/* 		width: 200rpx;
-		height: 60rpx;
-		margin-bottom: 30rpx; */
-	}
-	
-	.line{
-		height: 1rpx;
-		border-top: 1px solid gray; 
-		width: 90%; 
-		margin-left: 35rpx;
+
+	.remind_connect {
+		height: 800rpx;
+		color: #acacac;
+		font-size: 40rpx;
+		font-weight: bold;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+
 	}
 </style>
