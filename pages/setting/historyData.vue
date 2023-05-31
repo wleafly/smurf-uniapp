@@ -2,30 +2,30 @@
 
 	<view class="outer">
 		<view class="box">
-			<view style="font-size: 35rpx;">参数概况</view>
+			<view style="font-size: 35rpx;">{{$t('参数概况')}}</view>
 			<view style="display: flex;flex-wrap: wrap;">
 				<view v-for="paramId in includeParamArr" style="width: 25%;padding: 20rpx 0;" @click="selectParam(paramId)">
-					<view :style="selectOption==paramId?'color:#89B7EC;font-weight: bold':''" style="font-size: 35rpx;">{{paramArr[paramId]}}</view>
-					<view style="font-size: 20rpx;color: gray;">条数:{{normalValueArr.filter(value=>{return value[1]==paramId}).length}}</view>
+					<view :style="selectOption==paramId?'color:#89B7EC;font-weight: bold':''" style="font-size: 35rpx;">{{$t(paramArr[paramId])}}</view>
+					<view style="font-size: 20rpx;color: gray;">{{$t('条数')}}:{{normalValueArr.filter(value=>{return value[1]==paramId}).length}}</view>
 				</view>
 				<!-- 多参数单独处理 -->
 				<view v-if="manyParamValueArr.length" style="width: 25%;padding: 20rpx 0;" @click="selectParam(0)"> 
-					<view style="font-size: 35rpx;" :style="selectOption==0?'color:#89B7EC;font-weight: bold':''">多参数</view>
+					<view style="font-size: 35rpx;" :style="selectOption==0?'color:#89B7EC;font-weight: bold':''">{{$t('多参数')}}</view>
 					<!-- 条数0可以隐藏 -->
-					<view style="font-size: 20rpx;color: gray;">条数:{{manyParamValueArr.length}}</view>
+					<view style="font-size: 20rpx;color: gray;">{{$t('条数')}}:{{manyParamValueArr.length}}</view>
 				</view>
 	
 			</view>
 		</view>
 		<view class="box" style="margin-top: 30rpx;">
-			<view style="font-size: 35rpx;">变化趋势</view>
+			<view style="font-size: 35rpx;">{{$t('变化趋势')}}</view>
 			<view style="display: flex;margin-top: 20rpx;margin-bottom: 30rpx;">
 				<view class="attribute" >
-					可选参数
+					{{$t('可选参数')}}
 				</view>
 				<view style="display: flex;flex-wrap: wrap;width: 80%;">
 					<view v-for="option,index in optionalParams" style="width: 30%;padding: 5rpx;min-height: 50rpx;margin-bottom: 5rpx;font-size: 25rpx;">
-						<view @click="selectSonParam(index)" :style="sonParamIndex==index?'background-color: #eee':''" class="param_option">{{option}}</view>
+						<view @click="selectSonParam(index)" :style="sonParamIndex==index?'background-color: #eee':''" class="param_option">{{$t(option)}}</view>
 					</view>
 				</view>
 			</view>
@@ -34,11 +34,12 @@
 			<qiun-data-charts type="line" :chartData="chartData" :opts="opts" :ontouch="true"/>
 			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
 			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
-				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">删除历史数据</button>
-				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">获取Excel表格</button>
+				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">{{$t("删除历史数据")}}</button>
+				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">{{$t("获取Excel表格")}}</button>
 			</view>
-			<!-- <button @click="clickBtn1">发送F6</button> -->
-			<!-- <button @click="clickBtn2" style="margin: 20rpx 0">获取历史数据</button> -->
+			<!-- <button @click="clickF6">发送F6</button> -->
+			<!-- <button @click="clickFB">模拟发送FB</button> -->
+			<!-- <button @click="clickFBTrue" style="margin: 20rpx 0">FB获取历史数据</button> -->
 	
 		</view>
 	</view>
@@ -54,15 +55,13 @@
 				sonParamIndex:0,
 				optionalParams:[],
 				selectOption:-1, //选中的参数的参数id
-				isNewDevice:true,
+				isNewDevice:null,
 				includeParamArr:[],  //集合，历史数据中包含的参数类型id
 				normalValueArr:[],
 				manyParamValueArr:[],  
 				paramArr:getApp().globalData.paramArr,
 				unitArr:getApp().globalData.unitArr,
-				// paramArr:["","DDM_μ","DDM_m","PH","ORP","RDO","ION","ZS","DDM_S","COD","CL","CHLO","BGA","TPS","TSS","OIL","BOD"],
-				// paramArr:["","电导率","电导率","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
-				// unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""],
+
 				chartData: {
 					categories:[],
 					series: [
@@ -93,8 +92,8 @@
 						}]
 					}
 				},
-				manyParamContent:["温度","COD","COD内置浊度","电导率/盐度","PH","ORP","溶解氧","NHN","浊度"],
-				manyParamUnit:["℃","mg/L","mg/L","PSU","","mV","mg/L","mg/L","NTU"],
+				manyParamContent:["温度",...getApp().globalData.originalManyParamsConfig],
+				manyParamUnit:["℃",...getApp().globalData.originalManyParamsConfigUnit],
 				manyParamsConfig:null
 			}
 		},
@@ -109,20 +108,39 @@
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 		},
 		onShow() {
+		
+			// this.addData()
 			if(this.normalValueArr.length ==0 && this.manyParamValueArr.length ==0){ //历史数据没存过，自动发f6指令，询问用户要不要读数据
 				let that = this
+				let getNum = false
+				setTimeout(()=>{
+					if(!getNum){
+						uni.showModal({
+							content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
+							success(res) {
+								if(res.confirm){
+									console.log("发送FB")
+									getApp().writeValueToBle("FB",str=>{
+										that.handleStr(str)
+									})
+								}
+							}
+						})
+					}
+				},3000)
 				getApp().writeValueToBle("F6",str=>{
-					// console.log(str,str.length,typeof str)
-					if(str.indexOf("[")!=-1 && str.indexOf("]")!=-1){
+					console.log(str)
+					if(/^\[\d+\]/.test(str)){
 						let count = parseInt(str.split("[")[1].split("]")[0])
 						if(count && typeof count == "number"){
+							getNum = true
 							if(count<200){
 								getApp().writeValueToBle("FB",str=>{
 									that.handleStr(str)
 								})
 							}else{
 								uni.showModal({
-									content:`共发现${count}条历史数据，读取约耗时${count*0.047}秒，是否要读取`,
+									content:`${that.$t("共发现")}${count}${that.$t("条历史数据，读取约耗时")}${count*0.047}${that.$t("秒，是否要读取")}`,
 									success(res) {
 										if(res.confirm){
 											console.log("发送FB")
@@ -133,18 +151,6 @@
 									}
 								})
 							}
-						}else{ //针对老设备f6失效的情况
-							uni.showModal({
-								content:"f6指令未读取到数据条数，是否仍要读取数据",
-								success(res) {
-									if(res.confirm){
-										console.log("发送FB")
-										getApp().writeValueToBle("FB",str=>{
-											that.handleStr(str)
-										})
-									}
-								}
-							})
 						}
 						
 						
@@ -155,16 +161,31 @@
 			
 		},
 		methods: {	
+			clickF6(){
+				getApp().writeValueToBle("f6",str=>{
+					console.log(str)
+				},()=>{
+					console.log("写f6失败")
+				})
+			},
+			clickFBTrue(){
+				getApp().writeValueToBle("FB",str=>{
+					that.handleStr(str)
+				})
+			},
+			clickFB(){
+				this.addData()
+			},
 			downloadData(){
 				/*#ifdef MP*/
 				const workbook = XLSX.utils.book_new();
 				for(let paramId of this.includeParamArr){
 					let needArr = this.normalValueArr.filter((item)=>{return item[1] == paramId})
-					let head = ["序号",`${this.paramArr[paramId]}(${this.unitArr[paramId]})`,"温度(℃)"]  //excel表头
+					let head = [$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)"]  //excel表头
 					if(paramId==4){
 						head.pop()
 					}else if(paramId == 9){
-						head = [...head,...["浊度(NTU)","BOD(mg/L)"]]
+						head = [...head,...[this.$t("浊度")+"(NTU)","BOD(mg/L)"]]
 					}
 					let resultArr = [head]
 					if(paramId == 4){
@@ -181,37 +202,37 @@
 						})
 					}
 					// console.log(this.paramArr[paramId],resultArr) //表名和数据
-					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr), this.paramArr[paramId]);
+					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr), this.$t(this.paramArr[paramId]));
 				}
 				
 				if(this.manyParamValueArr.length){
 					let head = []
 					if(this.manyParamsConfig){
-						head = ['温度(℃)', 'COD(mg/L)', 'COD内置浊度(mg/L)']
+						head = [this.$t("温度")+'(℃)', 'COD(mg/L)', this.$t('COD内置浊度')+'(mg/L)']
 						this.manyParamsConfig.forEach((item,index)=>{
 							if(index>0){
-								head[index+2] = `${item}(${getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.findIndex((option)=>{return option == item})]})`
+								head[index+2] = `${this.$t(item)}(${getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.findIndex((option)=>{return option == item})]})`
 							}
 						})
 					}else{
 						this.manyParamContent.forEach((item,index)=>{
-							head[index] = `${item}(${this.manyParamUnit[index]})`
+							head[index] = `${this.$t(item)}(${this.manyParamUnit[index]})`
 						})
 					}
-					head.unshift("序号") //向开头添加元素用unshift
+					head.unshift(this.$t("序号")) //向开头添加元素用unshift
 					let resultArr = [head]
 					this.manyParamValueArr.forEach((value,index)=>{
 						resultArr.push([index+1,...value.slice(2,value.length)])
 					})
 					// console.log("多参数",resultArr)
-					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr),'多参数');
+					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr),this.$t('多参数'));
 				}
 				
 				const fileData = XLSX.write(workbook, {
 					bookType: "xlsx",
 					type: 'base64'
 				});
-				const filePath = `${wx.env.USER_DATA_PATH}/历史数据${getDateTime.dateTimeStr('y-m-d h:i:s')}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
+				const filePath = `${wx.env.USER_DATA_PATH}/${this.$t('历史数据')}${getDateTime.dateTimeStr('y-m-d h:i:s')}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
 				const fs = wx.getFileSystemManager()
 				console.log(filePath)
 				fs.writeFile({
@@ -236,22 +257,22 @@
 							})
 						}
 					},
-					fail: e => {
-						console.error(e)
-						if (e.errMsg.indexOf('locked')) {
-							wx.showModal({
-								title: '提示',
-								content: '文档已打开，请先关闭',
-							})
-						}
-					}
+					// fail: e => {
+					// 	console.error(e)
+					// 	if (e.errMsg.indexOf('locked')) {
+					// 		wx.showModal({
+					// 			title: '提示',
+					// 			content: '文档已打开，请先关闭',
+					// 		})
+					// 	}
+					// }
 				})
 				
 				/*#endif*/
 			},
 			deleteData(){
 				uni.showModal({
-					content:"是否清除历史记录",
+					content:this.$t("是否清除历史记录"),
 					success(res) {
 						if(res.confirm){
 							getApp().writeValueToBle("FD",str=>{
@@ -343,23 +364,55 @@
 				this.chartData = chartData
 			
 			},
-			addData(){
+			addData(){ //模拟用假数据
 				let tempArr
 				let timer = setInterval(()=>{
-				
+					
 					switch(Math.round(3*Math.random())){
 						case 0:  //一般数据
-							tempArr = [0,Math.round(5+2*Math.random()),4,Math.round(100*Math.random()),Math.round(200+Math.random()*100)/10,0,0]
+							tempArr = "[0,8,4,21,22,0,0,]"
 							break
 						case 1:  //ORP
-							tempArr = [0,4,16,Math.round(100*Math.random()),0,0,0]
+							tempArr = "[0,4,16,32,0,0,0,]"
 							break
 						case 2:  //COD
-							tempArr = [0,9,3,Math.round(100*Math.random()),Math.round(200+Math.random()*100)/10,Math.round(100*Math.random()),Math.round(100*Math.random())]
+							tempArr = "[0,9,3,32,54,43,1,]"
 							break
 						case 3:  //多参数
-							tempArr = [1,4,0,23.4,Math.round(100*Math.random()),6,37.5,-2,5.5,321,23,40.8] 
+							tempArr = "[1,4,0,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
 					}
+					this.strToNumArr(tempArr)
+					
+					// switch(Math.round(3*Math.random())){
+					// 	case 0:  //一般数据
+					// 		tempArr = "[0,8,21,22,]"
+					// 		break
+					// 	case 1:  //ORP
+					// 		tempArr = "[0,4,32,]"
+					// 		break
+					// 	case 2:  //COD
+					// 		tempArr = "[0,9,3,32,54,43,1,]"
+					// 		break
+					// 	case 3:  //多参数
+					// 		tempArr = "[1,4,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
+					// }
+					// this.strToNumArr(tempArr)
+					
+					// this.isNewDevice = true
+					// switch(Math.round(3*Math.random())){
+					// 	case 0:  //一般数据
+					// 		tempArr = [0,8,4,Math.round(100*Math.random()),Math.round(200+Math.random()*100)/10,0,0]
+					// 		break
+					// 	case 1:  //ORP
+					// 		tempArr = [0,4,16,Math.round(100*Math.random()),0,0,0]
+					// 		break
+					// 	case 2:  //COD
+					// 		tempArr = [0,9,3,Math.round(100*Math.random()),Math.round(200+Math.random()*100)/10,Math.round(100*Math.random()),Math.round(100*Math.random())]
+					// 		break
+					// 	case 3:  //多参数
+					// 		tempArr = [1,4,0,23.4,Math.round(100*Math.random()),6,37.5,-2,5.5,321,23,40.8] 
+					// }
+					
 					this.handleArr(tempArr)
 				},50)
 				
@@ -383,17 +436,20 @@
 				}
 			},
 			handleArr(arr){
-				if(this.isNewDevice){
-					arr.splice(2,1) //移除地址。统一数据格式
-				}
-				if(arr[0]==0){
-					if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
-						this.includeParamArr.push(arr[1])
+				if(this.isNewDevice!=null){
+					if(this.isNewDevice){
+						arr.splice(2,1) //移除地址。统一数据格式
 					}
-					this.normalValueArr.push(arr)
-				}else if(arr[0]==1){
-					this.manyParamValueArr.push(arr)
+					if(arr[0]==0){
+						if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
+							this.includeParamArr.push(arr[1])
+						}
+						this.normalValueArr.push(arr)
+					}else if(arr[0]==1){
+						this.manyParamValueArr.push(arr)
+					}
 				}
+
 			},
 			strToNumArr(str){
 				let strArr = str.slice(1,str.length-2).split(',')
@@ -402,16 +458,31 @@
 				}
 				let arr = strArr.map(Number)
 
-				if(arr[0]==0 || arr[0]==1){ //无论新老设备，类型一定是0或1，代表单参数还是多参数
-					if(arr[0]==0 && (arr[1]<1 || arr[1]>16)){
-						return
-					}
-					if(arr[0]==0 && arr[1]!=9 && (arr[arr.length-1]!=0 || arr[arr.length-2]!=0)){ //单参数如果不是cod，后面两项为0，否则是假数据
-						return
-					}
-			
+				if((arr[0]==0 && arr[1]>0 && arr[1]<20)|| (arr[0]==1 && arr.length>10)){ //无论新老设备，类型一定是0或1，代表单参数还是多参数
+
 					console.log("处理后的历史数据：",arr)
+					if(this.isNewDevice==null){
+						if(arr[0]==0){ //不是cod的单参数
+							if(arr.length==7){
+								this.isNewDevice = true
+							}
+							if(arr.length==3 || arr.length==4 || arr.length==6){
+								this.isNewDevice = false
+							}
+						}
+						if(arr[0]==1){
+							if(arr.length==12){
+								this.isNewDevice = true
+							}
+							if(arr.length==11){
+								this.isNewDevice = false
+							}
+						}
+						
+					}
+					
 					this.handleArr(arr)
+					
 				}
 				
 			}

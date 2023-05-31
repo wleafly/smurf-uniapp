@@ -1,24 +1,24 @@
 <template>
 	<view style="margin: 20rpx;">
 		<view style="display: flex;align-items: center;">
-			<view style="width: 25%;color: gray;">日期筛选</view>
+			<view style="width: 25%;color: gray;">{{$t('日期筛选')}}</view>
 			<picker style="background-color: #eee;padding: 10rpx 20rpx;border-radius: 10rpx;" @change="bindDateChange" :range="dateArr">
-				<view style="display: flex;">{{selectedDate?selectedDate:"请选择日期"}}<u-icon name="arrow-down"></u-icon></view>
+				<view style="display: flex;">{{selectedDate?selectedDate:$t("请选择日期")}}<u-icon name="arrow-down"></u-icon></view>
 			</picker>
 		</view>
 		
 		<view style="display: flex;align-items: center;margin: 20rpx 0;">
-			<view style="width: 25%;color: gray;">时间段筛选</view>
+			<view style="width: 25%;color: gray;">{{$t('时间段筛选')}}</view>
 			<picker style="background-color: #eee;padding: 10rpx 20rpx;border-radius: 10rpx;" @change="bindTimeChange" :range="timeArr">
-				<view style="display: flex;">{{selectedTime?selectedTime:"请选择时间段"}}<u-icon name="arrow-down"></u-icon></view>
+				<view style="display: flex;">{{selectedTime?selectedTime:$t("请选择时间段")}}<u-icon name="arrow-down"></u-icon></view>
 			</picker>
 		</view>
 		
 		<view style="display: flex;align-items: center;">
-			<view style="color: gray;width: 25%;">传感器类型</view>
+			<view style="color: gray;width: 25%;">{{$t('传感器类型')}}</view>
 			<view style="display: flex;flex-wrap: wrap;width: 75%;">
 				<view v-for="sensor,index in sensorArr" style="width: 30%;padding: 5rpx;min-height: 50rpx;margin-bottom: 5rpx;" @click="selectSensor(index)">
-					<view :style="index==selectedSensorIndex?'background-color: #eee':''" class="param_option">{{paramArr[sensor]}}</view>
+					<view :style="index==selectedSensorIndex?'background-color: #eee':''" class="param_option">{{$t(paramArr[sensor])}}</view>
 				</view>
 			</view>
 		</view>
@@ -28,12 +28,12 @@
 			<uni-table v-if="tableData && tableData.length && tableData[0].param" :border="true"  style="margin-top: 20rpx;">	
 				<!-- 单参数表头 -->
 				<uni-tr>
-					<uni-th>序号</uni-th>
-					<uni-th>{{paramArr[tableData[0].param]+"("+unitArr[tableData[0].param]+")"}}</uni-th>
-					<uni-th v-if="tableData[0].param!=4">温度(℃)</uni-th>
-					<uni-th v-if="tableData[0].param==9">浊度(NTU)</uni-th>
+					<uni-th>{{$t('序号')}}</uni-th>
+					<uni-th>{{$t(paramArr[tableData[0].param])+"("+unitArr[tableData[0].param]+")"}}</uni-th>
+					<uni-th v-if="tableData[0].param!=4">{{$t('温度')}}(℃)</uni-th>
+					<uni-th v-if="tableData[0].param==9">{{$t('浊度')}}(NTU)</uni-th>
 					<uni-th v-if="tableData[0].param==9">BOD(mg/L)</uni-th>
-					<uni-th>时间</uni-th>
+					<uni-th>{{$t("时间")}}</uni-th>
 				</uni-tr>
 				
 				<uni-tr v-for="item,index in tableData">
@@ -49,17 +49,17 @@
 			<uni-table v-else-if="tableData && tableData.length">
 				
 				<uni-tr v-if="!manyParamsActive">
-					<uni-th>序号</uni-th>
-					<uni-th>温度(℃)</uni-th>
-					<uni-th v-for="param in manyParamsDefault">{{param+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
-					<uni-th>时间</uni-th>
+					<uni-th>{{$t('序号')}}</uni-th>
+					<uni-th>{{$t('温度')}}(℃)</uni-th>
+					<uni-th v-for="param in manyParamsDefault">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
+					<uni-th>{{$t("时间")}}</uni-th>
 				</uni-tr>
 				
 				<uni-tr v-else>
-					<uni-th>序号</uni-th>
-					<uni-th>温度(℃)</uni-th>
-					<uni-th v-for="param in manyParamsActive">{{param+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
-					<uni-th>时间</uni-th>
+					<uni-th>{{$t('序号')}}</uni-th>
+					<uni-th>{{$t('温度')}}(℃)</uni-th>
+					<uni-th v-for="param in manyParamsActive">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
+					<uni-th>{{$t("时间")}}</uni-th>
 				</uni-tr>
 				
 				
@@ -73,9 +73,9 @@
 
 		</scroll-view>
 
-		<button class="btn" style="background-color: #63ff63;" @click="downloadExcel">生成Excel表格</button>
-		<button class="btn" style="background-color: #ffcb63;" @click="deleteOneDay">删除该日数据</button>
-		<button class="btn" style="background-color: #FF6363;" @click="clearAll">清除全部数据</button>
+		<button class="btn" style="background-color: #63ff63;" @click="downloadExcel">{{$t('生成Excel表格')}}</button>
+		<button class="btn" style="background-color: #ffcb63;" @click="deleteOneDay">{{$t('删除该日数据')}}</button>
+		<button class="btn" style="background-color: #FF6363;" @click="clearAll">{{$t('清除全部数据')}}</button>
 		
 	</view>
 </template>
@@ -98,9 +98,8 @@
 				unitArr:[],
 				selectedSensorIndex:0,
 				tableData:[],
-				manyParamsDefault:["COD","COD内置浊度","电导率/盐度","pH","ORP","溶解氧","铵氮/离子类","浊度"],
-				unitMap:new Map([["COD","mg/L"],["COD内置浊度","NTU"],["电导率/盐度","mS/cm"],["pH",""],["PH",""],["ORP","mV"],["溶解氧","mg/L"],["铵氮/离子类","mg/L"],["浊度","NTU"],
-				["电导率","mS/cm"],["盐度","PSU"],["余氯","mg/L"],["叶绿素","μg/L"],["蓝绿藻","Kcells/mL"],["透明度","mm"],["悬浮物","mg/L"],["水中油","mg/L"],["未连接",""]]),
+				manyParamsDefault:getApp().globalData.originalManyParamsConfig,
+				unitMap:getApp().globalData.paramUnitMap,
 				manyParamsActive:null
 
 			}
@@ -110,7 +109,7 @@
 				let that = this
 				if(this.selectedDate){
 					uni.showModal({
-						content:`是否要删除${this.selectedDate}的实时数据`,
+						content:`${$t('是否要删除')}${this.selectedDate}${$t('的实时数据')}`,
 						success(res) {
 							if(res.confirm){
 								console.log("删除一天的数据")
@@ -126,7 +125,7 @@
 				let that = this
 				if(this.dateArr.length>0){
 					uni.showModal({
-						content:`是否要删除所有下载的数据`,
+						content:that.$t('是否要删除所有下载的数据'),
 						success(res) {
 							if(res.confirm){
 								for(let date of that.dateArr){
@@ -151,11 +150,11 @@
 						let excelData
 						
 						if(paramId==4){
-							excelData = [["序号","ORP(mV)","时间"]]
+							excelData = [[this.$t("序号"),"ORP(mV)",this.$t("时间")]]
 						}else if(paramId==9){
-							excelData = [["序号","COD(mg/L)","温度(℃)","浊度(NTU)","BOD(mg/L)","时间"]]
+							excelData = [[this.$t("序号"),"COD(mg/L)",this.$t("温度")+"(℃)",this.$t("浊度")+"(NTU)","BOD(mg/L)",this.$t("时间")]]
 						}else{
-							excelData = [["序号",`${this.paramArr[paramId]}(${this.unitArr[paramId]})`,"温度(℃)","时间"]]
+							excelData = [[this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)",this.$t("时间")]] 
 						}
 					
 						for(let item of tableData){
@@ -175,21 +174,21 @@
 						let manyParamsHeadWithUnit = []
 						if(this.manyParamsActive){
 							for(let i of this.manyParamsActive){
-								manyParamsHeadWithUnit.push(i+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								manyParamsHeadWithUnit.push(this.$(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
 							} 
 		
 						}else{
 							for(let i of this.manyParamsDefault){
-								manyParamsHeadWithUnit.push(i+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								manyParamsHeadWithUnit.push(this.$(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
 							} 
 						}
-						excelData = [["序号","温度(℃)",...manyParamsHeadWithUnit,"时间"]]
+						excelData = [[this.$t("序号"),this.$t("温度")+"(℃)",...manyParamsHeadWithUnit,this.$t("时间")]]
 						for(let item of tableData){
 							excelData.push([excelData.length,item.temperature,...item.values,item.createTime])
 						}
 						// console.log(excelData)
-						paramType = "多参数"
-						XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), "多参数");
+						paramType = this.$t("多参数")
+						XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), this.$t("多参数"));
 					}
 				}
 				
@@ -198,7 +197,7 @@
 					bookType: "xlsx",
 					type: 'base64'
 				});
-				const filePath = `${wx.env.USER_DATA_PATH}/${paramType}实时数据${this.selectedDate+" "+this.selectedTime}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
+				const filePath = `${wx.env.USER_DATA_PATH}/${paramType}${this.$t('实时数据')}${this.selectedDate+" "+this.selectedTime}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
 				const fs = wx.getFileSystemManager()
 				fs.writeFile({
 					filePath: filePath,
@@ -225,7 +224,7 @@
 				console.log('wholeDayArr',this.wholeDayArr)
 				if(this.wholeDayArr){
 					let nodeArr = []
-					this.timeArr = ['全天']
+					this.timeArr = [this.$t('全天')]
 					
 					this.wholeDayArr.forEach((value,index)=>{
 						if(value.testTime){
@@ -295,7 +294,7 @@
 			let manyParamsConfig = uni.getStorageSync("manyParamsConfig")
 			if(manyParamsConfig){
 				if(manyParamsConfig[0]=='COD'){
-					this.manyParamsActive = ["COD","COD内置浊度"]
+					this.manyParamsActive = ["COD","浊度(COD)"]
 				}else{ //COD未连接
 					this.manyParamsActive = ["--","--"]
 				}
@@ -305,6 +304,7 @@
 			// console.log(this.manyParamsActive)
 		},
 		onShow(){
+			console.log(this.unitMap)
 			// console.log(this.unitMap.get("CD"))
 			// console.log(uni.getStorageSync('2023-05-23'))
 			

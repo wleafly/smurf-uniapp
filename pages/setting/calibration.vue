@@ -1,66 +1,66 @@
 <template>
 	<view style="padding: 20rpx;">
 		<view v-if="deviceArr.length==0" class="remind_connect">
-			<loading txt="正在获取设备"></loading>
+			<loading :txt="$t('正在获取设备')"></loading>
 		</view>
 		<view v-for="device,index in deviceArr" class="box">
 			<!-- 单参数的情况,param在10以后的设备没有校准指令，暂时不显示 -->
 			<view v-if="device.type==0 && device.param<10">
 				<view class="row" style="padding-top: 20rpx;font-size: 35rpx;font-weight: bold;color: gray;">
-					<view>{{paramArr[device.param]}}</view>
+					<view>{{$t(paramArr[device.param])}}</view>
 					<u-icon v-if="deviceArr.length>1" :name="formFlap[index]?'arrow-down':'arrow-up'"
 						@click="showOrFlap(index)"></u-icon>
 				</view>
 
 				<view v-if="!formFlap[index]" style="border-top: 1rpx solid lightgray;margin-top: 20rpx;">
 					<view class="row">
-						<view>设备地址</view>
+						<view>{{$t("设备地址")}}</view>
 						<view style="width: 50%;">{{device.address}}</view>
-						<view class="button" @click="alterAddress(device.address,index)">更改</view>
+						<view class="button" @click="alterAddress(device.address,index)">{{$t("更改")}}</view>
 					</view>
 					<view v-if="device.param!=4" class="row">
-						<view>温度校准</view>
-						<input type="number" class="input" v-model:value="temperatureArr[index]" placeholder="请输入实际温度"/>
-						<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">写入</view>
+						<view>{{$t("温度校准")}}</view>
+						<input type="number" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
+						<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">{{$t("写入")}}</view>
 					</view>
 					<view v-if="device.param!=3" class="row">
-						<view>零点校准</view>
+						<view>{{$t("零点校准")}}</view>
 						<input type="number" class="input" v-model:value="zeroArr[index]" />
-						<view class="button" @click="adjustValue(device.address,zeroArr[index],'零点',device.param)">写入
+						<view class="button" @click="adjustValue(device.address,zeroArr[index],'零点',device.param)">{{$t("写入")}}
 						</view>
 					</view>
 					<view v-else class="row">
-						<view>零点校准</view>
+						<view>{{$t("零点校准")}}</view>
 						<view style="width: 50%;">6.86</view>
-						<view class="button" @click="adjustValue(device.address,'0','零点',device.param)">写入</view>
+						<view class="button" @click="adjustValue(device.address,'0','零点',device.param)">{{$t("写入")}}</view>
 					</view>
 					<view v-if="device.param!=3" class="row">
-						<view>斜率校准</view>
+						<view>{{$t("斜率校准")}}</view>
 						<input type="number" class="input" v-model:value="slopeArr[index]" />
-						<view class="button" @click="adjustValue(device.address,slopeArr[index],'斜率',device.param)">写入
+						<view class="button" @click="adjustValue(device.address,slopeArr[index],'斜率',device.param)">{{$t("写入")}}
 						</view>
 					</view>
 					<view v-else class="row">
-						<view>斜率校准</view>
+						<view>{{$t("斜率校准")}}</view>
 						<view class="button" @click="selectPH4=true"
 							style="width: 25%;border: 1rpx solid lightgrey;color: black;"
 							:style="selectPH4?'background-color: #ddd':'background-color: transparent;'">4.00</view>
 						<view class="button" @click="selectPH4=false"
 							style="width: 25%;border: 1rpx solid lightgrey;color: black;"
 							:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
-						<view class="button" @click="adjustValue(device.address,'0','斜率',device.param)">写入</view>
+						<view class="button" @click="adjustValue(device.address,'0','斜率',device.param)">{{$t("写入")}}</view>
 					</view>
 
 					<view v-if="device.param==9">
 						<view class="row" style="border-top: 1rpx solid #eee;padding-top: 20rpx;">
-							<view>浊度零点校准</view>
+							<view>{{$t("浊度零点校准")}}</view>
 							<input type="number" class="input" style="width: 40%;" v-model:value="mudZeroArr[index]" />
-							<view class="button" @click="adjustValue(device.address,mudZeroArr[index],'浊度零点')">写入</view>
+							<view class="button" @click="adjustValue(device.address,mudZeroArr[index],'浊度零点')">{{$t("写入")}}</view>
 						</view>
 						<view class="row">
-							<view>浊度斜率校准</view>
+							<view>{{$t("浊度斜率校准")}}</view>
 							<input type="number" class="input" style="width: 40%;" v-model:value="mudSlopeArr[index]" />
-							<view class="button" @click="adjustValue(device.address,mudSlopeArr[index],'浊度斜率')">写入
+							<view class="button" @click="adjustValue(device.address,mudSlopeArr[index],'浊度斜率')">{{$t("写入")}}
 							</view>
 						</view>
 					</view>
@@ -72,52 +72,52 @@
 			<view v-else-if="device.type==1">
 				<view class="row"
 					style="padding: 20rpx 0;font-size: 35rpx;font-weight: bold;color: gray;border-bottom: 1rpx solid lightgray;">
-					<view>多参数</view>
+					<view>{{$t('多参数')}}</view>
 				</view>
 				<view class="row">
-					<view>设备地址</view>
+					<view>{{$t('设备地址')}}</view>
 					<view style="width: 50%;">{{device.address}}</view>
-					<view class="button" @click="alterAddress(device.address,index)">更改</view>
+					<view class="button" @click="alterAddress(device.address,index)">{{$t("更改")}}</view>
 				</view>
 				<view class="row">
-					<view>温度校准</view>
-					<input type="number" class="input" v-model:value="temperatureArr[index]" placeholder="请输入实际温度"/>
-					<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">写入</view>
+					<view>{{$t('温度校准')}}</view>
+					<input type="number" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
+					<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">{{$t("写入")}}</view>
 				</view>
 				<view class="row">
-					<view>参数选择</view>
+					<view>{{$t('参数选择')}}</view>
 					<picker class="input" @change="manyParamsBindChange" :range='manyParamsOptionArr'>
 						<view style="display: flex;justify-content: space-between;">
-							<view>{{manyParamsOption>=0?manyParamsOptionArr[manyParamsOption]:"请选择参数"}}</view><u-icon
+							<view>{{manyParamsOption>=0?manyParamsOptionArr[manyParamsOption]:$t("请选择参数")}}</view><u-icon
 								name="arrow-down"></u-icon>
 						</view>
 					</picker>
 					<view class="button" style="background-color: transparent;"></view>
 				</view>
 				<view v-if="manyParamsOption!=3" class="row">
-					<view>零点校准</view>
+					<view>{{$t('零点校准')}}</view>
 					<input type="number" class="input" v-model:value="zeroArr[index]" />
-					<view class="button" @click="adjustManyParams(device.address,zeroArr[index],'零点')">写入</view>
+					<view class="button" @click="adjustManyParams(device.address,zeroArr[index],'零点')">{{$t("写入")}}</view>
 				</view>
 				<view v-else class="row">
-					<view>零点校准</view>
+					<view>{{$t('零点校准')}}</view>
 					<view style="width: 50%;">6.86</view>
-					<view class="button" @click="adjustValue(device.address,'0','零点',3)">写入</view>
+					<view class="button" @click="adjustValue(device.address,'0','零点',3)">{{$t("写入")}}</view>
 				</view>
 				<view v-if="manyParamsOption!=3" class="row">
-					<view>斜率校准</view>
+					<view>{{$t('斜率校准')}}</view>
 					<input type="number" class="input" v-model:value="slopeArr[index]" />
-					<view class="button" @click="adjustManyParams(device.address,slopeArr[index],'斜率')">写入</view>
+					<view class="button" @click="adjustManyParams(device.address,slopeArr[index],'斜率')">{{$t("写入")}}</view>
 				</view>
 				<view v-else class="row">
-					<view>斜率校准</view>
+					<view>{{$t('斜率校准')}}</view>
 					<view class="button" @click="selectPH4=true"
 						style="width: 25%;border: 1rpx solid lightgrey;color: black;"
 						:style="selectPH4?'background-color: #ddd':'background-color: transparent;'">4.00</view>
 					<view class="button" @click="selectPH4=false"
 						style="width: 25%;border: 1rpx solid lightgrey;color: black;"
 						:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
-					<view class="button" @click="adjustValue(device.address,'0','斜率',3)">写入</view>
+					<view class="button" @click="adjustValue(device.address,'0','斜率',3)">{{$t("写入")}}</view>
 				</view>
 
 			</view>
@@ -149,7 +149,7 @@
 				slopeAdjustArr: ["", "fe0607", "fe0607", "fe0609", "fe060b", "fe060d", "fe060f", "fe0611", "fe0607",
 					"fe0603"
 				], //斜率校准的指令列表
-				manyParamsOptionArr: ["COD", "COD内置浊度", "电导率", "pH", "ORP", "溶解氧", "铵氮/离子类", "浊度", "盐度"],
+				manyParamsOptionArr: ["COD", this.$t("浊度(COD)"), this.$t("电导率"), "pH", "ORP", this.$t("溶解氧"), this.$t("铵氮/离子类"), this.$t("浊度"), this.$t("盐度")],
 				manyParamsOption: -1,
 				isShowLoading: true
 			}
@@ -168,7 +168,7 @@
 				} else {
 					uni.showToast({
 						icon: 'none',
-						title: '请选择参数'
+						title: this.$t('请选择参数')
 					})
 				}
 
@@ -183,9 +183,9 @@
 			alterAddress(address, index) {
 				let that = this
 				uni.showModal({
-					title: "提示",
+					title: that.$t("提示"),
 					editable: true,
-					placeholderText: "请输入新地址",
+					placeholderText: that.$t("请输入新地址"),
 					success(res) {
 						if (res.confirm) {
 							let newAddress = parseInt(res.content)
@@ -205,14 +205,14 @@
 								}
 								console.log(msg)
 								uni.showLoading({
-									title: '更改中'
+									title: that.$t('更改中')
 								})
 								let alter_success = false //更改成功的标志
 								setTimeout(() => {
 									uni.hideLoading() //超时关闭加载
 									if (!alter_success) {
 										uni.showToast({
-											title: "更改失败，请重新发送",
+											title: that.$t("更改失败，请重新发送"),
 											icon: "none"
 										})
 									}
@@ -223,7 +223,7 @@
 									if (str.search("[OK]") != -1) {
 										uni.hideLoading() //主动关闭加载
 										uni.showToast({
-											title: "修改成功",
+											title: that.$t("修改成功"),
 											icon: "none"
 										})
 										alter_success = true
@@ -244,7 +244,7 @@
 							} else {
 								uni.showToast({
 									icon: 'none',
-									title: '请输入1~127之间的数'
+									title: that.$t('请输入1~127之间的数')
 								})
 							}
 						}
@@ -257,7 +257,7 @@
 				if (!value) {
 					uni.showToast({
 						icon: 'none',
-						title: '请输入值'
+						title: this.$t('请输入值')
 					})
 					return
 				}
@@ -267,7 +267,7 @@
 						if(value>80){
 							uni.showToast({
 								icon:'none',
-								title:'温度超出使用范围'
+								title:this.$t('温度超出使用范围')
 							})
 							return
 						}else{
@@ -324,7 +324,7 @@
 					}
 					console.log(msg) //以后替换成向蓝牙发送的逻辑
 					uni.showLoading({
-						title: '校准中'
+						title: this.$t('校准中')
 					})
 					let alter_success = false //更改成功的标志
 					let get_error = false //是否手动[Error]
@@ -332,18 +332,19 @@
 						if (!alter_success && !get_error) {
 							uni.hideLoading() //超时关闭加载
 							uni.showToast({
-								title: "校准失败，请重新发送",
+								title: this.$t("校准失败，请重新发送"),
 								icon: "none"
 							})
 						}
 					}, 10000)
+					let that = this
 					getApp().writeValueToBle(msg, str => {
 						// console.log(str)
 						getApp().handleStrFromBlueTooth(str) 
 						if (str.search("[OK]") != -1) {
 							uni.hideLoading() //主动关闭加载
 							uni.showToast({
-								title: "校准成功",
+								title: that.$t("校准成功"),
 								icon: "none"
 							})
 							alter_success = true
@@ -359,7 +360,7 @@
 							get_error = true
 							uni.hideLoading()  //主动关闭加载
 							uni.showToast({
-								title: "校准失败，请重新发送",
+								title: that.$t("校准失败，请重新发送"),
 								icon: "none"
 							})
 						}
@@ -368,7 +369,7 @@
 				} else {
 					uni.showToast({
 						icon: 'none',
-						title: '请输入0~65535之间的数'
+						title: this.$t('请输入0~65535之间的数')
 					})
 				}
 			}
@@ -394,7 +395,7 @@
 							}
 						} else {
 							uni.showModal({
-								content: '设备连接已断开，请重新连接',
+								content: that.$t('设备连接已断开，请重新连接'),
 								showCancel: false,
 								success(res) {
 									if (res.confirm) {
@@ -407,7 +408,7 @@
 				})
 			} else {
 				uni.showModal({
-					content: '设备未连接',
+					content: this.$t('设备未连接'),
 					showCancel: false,
 					success(res) {
 						if (res.confirm) {
@@ -416,7 +417,7 @@
 					}
 				})
 			}
-			// if(this.deviceArr.length)
+		
 
 
 			// this.deviceArr = [{

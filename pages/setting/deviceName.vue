@@ -2,8 +2,8 @@
 	<view class="outer">
 		<input :placeholder="i18n('deviceName_input')" v-model:value="content" class="input">
 
-		<text style="margin-left: 10rpx; font-size: 22rpx; color: #bdc3c7;">{{$t('deviceName_label')}}</text>
-		<button @click="modify" class="btn">{{$t('deviceName_button')}}</button>
+		<text style="margin-left: 10rpx; font-size: 22rpx; color: #bdc3c7;">{{$t('新名称包含3-18个数字或字母')}}</text>
+		<button @click="modify" class="btn">{{$t('确认修改')}}</button>
 	</view>
 
 </template>
@@ -28,70 +28,23 @@
 			},
 
 			// //通过蓝牙向设备发送数据
-			// send(msg) {
-			// 	let buffer = this.stringToArrayBuffer(msg)
-			// 	// console.log(buffer)
-			// 	let that = this
-				
-			// 	uni.writeBLECharacteristicValue({
-			// 		deviceId: this.deviceId,
-			// 		serviceId: this.serviceId,
-			// 		characteristicId: this.writeCharacteristicId,
-			// 		value: buffer,
-			// 		success(res) {
-			// 			uni.showToast({
-			// 				icon: 'none',
-			// 				title: "数据发送成功"
-			// 			})
-			// 			// console.log(res)
-			// 			console.log("数据发送成功")
-			// 			that.listenValueChange()
-			// 		},
-			// 		fail(err) {
-			// 			console.error(err)
-			// 			uni.showToast({
-			// 				icon: 'none',
-			// 				title: "数据发送失败"
-			// 			})
-			// 			console.log("数据发送失败")
-			// 		}
-			// 	})
-			// },
-			// //监听数据变化
-			// listenValueChange() {
-			// 	let res2 = {
-			// 		categories: this.categories2,
-			// 		series: this.series2,
-			// 	};
-			// 	let that = this
-			// 	uni.onBLECharacteristicValueChange(res => {
-			// 		let resHex = this.ab2hex(res.value)
-			// 		this.messageHex.value = resHex
-			// 		console.log('resHex', resHex)
-			// 		let result = this.hexCharCodeToStr(resHex)
-			// 		console.log(result)
-			// 		result = String(result)
 
-			// 	})
-			// },
-			
-			
 			modify() {
 				if(this.content.trim()){  //输入框不为空串，就弹窗提示是否要改名
 					let that = this
 					uni.showModal({
-						content:"是否要将设备名修改为"+that.content,
+						content:that.$t("是否要将设备名修改为")+that.content,
 						success(res) {
 							if(res.confirm){
 								if(that.content.length <3){
 									uni.showToast({
 										icon:'none',
-										title:"名称过短"
+										title:that.$t("名称过短")
 									})
 								}else if( that.content.length>18){
 									uni.showToast({
 										icon:'none',
-										title:"名称过长"
+										title:that.$t("名称过长")
 									})
 								}else {
 									// let pwd = '<pwd123456>'
@@ -109,9 +62,7 @@
 					console.log("是空串")
 				}
 				
-				
 
-				
 				
 				// this.send(pwd) //先发送密码
 				

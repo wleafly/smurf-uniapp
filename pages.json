@@ -7,66 +7,64 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "实时数据"
+				"navigationBarTitleText": "%Real-time data%"
 			}
 		},
 		{
 			"path": "pages/wifi/wifi",
 			"style": {
-				"navigationBarTitleText": "可选设备",
+				"navigationBarTitleText": "%Optional equipment%",
 				"enablePullDownRefresh": true
 			}
 		},
 		{
 			"path": "pages/setting/setting",
 			"style": {
-				"navigationBarTitleText": "设置"
+				"navigationBarTitleText": "%Setting%"
 			}
 		},
 		{
 			"path": "pages/setting/calibration",
 			"style": {
-				"navigationBarTitleText": "数据校准"
+				"navigationBarTitleText": "%Data calibration%"
 			}
 		},
 		{
 			"path": "pages/setting/deviceName",
 			"style": {
-				"navigationBarTitleText": "设备名称"
+				"navigationBarTitleText": "%Device name%"
 			}
 		},
 		{
 			"path": "pages/setting/historyData",
 			"style": {
-				"navigationBarTitleText": "历史数据"
+				"navigationBarTitleText": "%Historical data%"
 			}
 		},
 		{
 			"path": "pages/setting/language",
 			"style": {
-				"navigationBarTitleText": "语言选项"
+				"navigationBarTitleText": "%Language option%"
 			}
 		},
 		{
 			"path": "pages/setting/set",
 			"style": {
-				"navigationBarTitleText": "设置"
+				"navigationBarTitleText": "%System setting%"
 			}
 		},
 		{
 			"path": "pages/setting/troubleshooting",
 			"style": {
-				"navigationBarTitleText": "故障排查"
+				"navigationBarTitleText": "%troubleshooting%"
 			}
 		}
-	    
 
-        
         ,{
             "path" : "pages/setting/download",
             "style" :                                                                                    
             {
-                "navigationBarTitleText": "下载内容",
+                "navigationBarTitleText": "%Download content%",
                 "enablePullDownRefresh": false
             }
             
@@ -83,17 +81,17 @@
 		// "custom": true,
 		"list" : [{
 			"pagePath": "pages/index/index",
-			"text": "实时数据",
+			"text": "%tab1%",
 			"iconPath": "static/realTimeData.png",
 			"selectedIconPath": "static/realTimeData.png"
 		},{
 			"pagePath": "pages/wifi/wifi",
-			"text": "连接管理",
+			"text": "%tab2%",
 			"iconPath": "static/wifi.png",
 			"selectedIconPath": "static/wifi.png"
 		},{
 			"pagePath": "pages/setting/setting",
-			"text": "设置",
+			"text": "%tab3%",
 			"iconPath": "static/setting.png",
 			"selectedIconPath": "static/setting.png"
 		}]

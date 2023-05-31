@@ -23,9 +23,17 @@
 			deviceName:"", //蓝精灵的名字
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
+			paramArr:["多参数","电导率μ","电导率m","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","色度","污泥浓度"],
+			unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L","Hazen","g/L"],
+			manyParamsDefalut:["COD","电导率m","pH","ORP","溶解氧","铵氮/离子类","浊度"] ,//多参数默认配置
+			manyParamCustomOptions:["电导率μ","电导率m","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","色度","污泥浓度","未连接"],//多参数除参数1外自定义的可选项，参数1只能是COD
+			manyParamCustomUnits:["μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L","Hazen","g/L",""],//多参数自定义的可选项对应的单位
+			originalManyParamsConfig:["COD","浊度(COD)",'电导率m','pH','ORP','溶解氧','铵氮/离子类','浊度'],//首页多参数无配置的情况下的默认显示
+			originalManyParamsConfigUnit:["mg/L","NTU","mS/cm","","mV","mg/L","mg/L","NTU"],//首页多参数无配置的情况下的默认单位
+			paramUnitMap:new Map([["COD","mg/L"],["浊度(COD)","NTU"],["电导率m","mS/cm"],["电导率μ","μS/cm"],["pH",""],["PH",""],["ORP","mV"],["溶解氧","mg/L"],["铵氮/离子类","mg/L"],["浊度","NTU"],
+				["电导率","mS/cm"],["盐度","PSU"],["余氯","mg/L"],["叶绿素","μg/L"],["蓝绿藻","Kcells/mL"],["透明度","mm"],["悬浮物","mg/L"],["水中油","mg/L"],["色度","Hazen"],["污泥浓度","g/L"],["未连接",""]]),
 			
-			paramArr:["多参数","电导率1","电导率2","pH","ORP","溶解氧","铵氮/离子类","浊度","盐度","COD","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","BOD"],
-			unitArr:["","μS/cm","mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L","mg/L"],
+			
 			// deviceArr:[
 			// 	{
 			// 		address:3,
@@ -72,7 +80,7 @@
 			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
 			tempStr:"", //临时数据，存储不完整的蓝牙数据
 			isFirstData:true,
-			isNewDevice:true,
+			isNewDevice:null,
 			oldParamId:null,
 			addressToParamMap:[],
 			firstLoading:true,//代表进入数据页是否要发f900
@@ -81,9 +89,7 @@
 			normalValueArr:[],//历史数据页常规参数值数据
 			manyParamValueArr:[],//历史数据页多参数值数据
 			
-			manyParamsDefalut:["COD","电导率","PH","ORP","溶解氧","铵氮/离子类","浊度"] ,//多参数默认配置
-			manyParamCustomOptions:["电导率","PH","ORP","溶解氧","铵氮/离子类","浊度","盐度","余氯","叶绿素","蓝绿藻","透明度","悬浮物","水中油","未连接"],//多参数自定义的可选项
-			manyParamCustomUnits:["mS/cm","","mV","mg/L","mg/L","NTU","PSU","mg/L","μg/L","Kcells/mL","mm","mg/L","mg/L",""]//多参数自定义的可选项对应的单位
+
 		},
 		methods:{
 			// ArrayBuffer转16进制字符串
@@ -114,7 +120,7 @@
 			    return resultStr.join("");
 			},
 			writeValueToBle(msg,handleStr,failOperation){
-				// let msg = 'F900'
+				let that = this
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
 				uni.writeBLECharacteristicValue({
 					deviceId:getApp().globalData.deviceCoreData.deviceId,
@@ -139,12 +145,13 @@
 							failOperation()
 						}
 						
-						uni.showToast({icon:'none',title: msg+"发送失败"})
+						uni.showToast({icon:'none',title: msg+" "+that.$t('发送失败')})
 						console.log("数据发送失败",err)
 					}
 				})
 			},
 			writeBufferToBle(buffer,handleStr,failOperation){
+				let that = this
 				uni.writeBLECharacteristicValue({
 					deviceId:getApp().globalData.deviceCoreData.deviceId,
 					serviceId:getApp().globalData.deviceCoreData.serviceId,
@@ -162,7 +169,7 @@
 						}) 
 					},
 					fail(err) {
-						uni.showToast({icon:'none',title: "发送失败"})
+						uni.showToast({icon:'none',title: that.$t('发送失败')})
 						console.log("数据发送失败",err)
 					}
 				})
@@ -329,8 +336,11 @@
 				}
 				
 				if(getApp().globalData.isFirstData){ //第一个花括号数据要存时间，时间总是在最后两位
-					record.interval = numArr[numArr.length-2]
-					record.testTime = numArr[numArr.length-1]
+					if(numArr[numArr.length-1]%1 == 0 && numArr[numArr.length-2]%1 == 0){
+						record.interval = numArr[numArr.length-2]
+						record.testTime = numArr[numArr.length-1]
+					}
+
 					getApp().globalData.isFirstData = false
 				}
 				console.log(record)

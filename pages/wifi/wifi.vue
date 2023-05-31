@@ -14,7 +14,7 @@
 				<text style="margin-right: 10rpx;color: darkgray;font-size: 20rpx;">{{item.RSSI}} dBm</text>
 				<button class="btn_connect" @click="connectBle(index)" 
 				:style="{'background-color':blueToothStateArr[index]==0?'':blueToothStateArr[index]==1?'#ccc':'red'}">
-				{{blueToothStateArr[index]==0?"连接":blueToothStateArr[index]==1?"连接...":"断开"}}
+				{{blueToothStateArr[index]==0?$t("连接"):blueToothStateArr[index]==1?($t("连接")+"..."):$t("断开")}}
 				</button>
 			</view>
 		</view>
@@ -22,8 +22,8 @@
 		
 		<view v-if="!blueToothList.length" class="content" style="height: 600rpx;">
 			<image src="../../static/蓝牙.png" style="width: 120rpx;height: 120rpx"></image>
-			<text class="no_blue" style="font-size: 35rpx;font-weight: bold;">没有发现蓝牙设备</text>
-			<text class="no_blue">下拉搜索</text>
+			<text class="no_blue" style="font-size: 35rpx;font-weight: bold;">{{$t('没有发现蓝牙设备')}}</text>
+			<text class="no_blue">{{$t('下拉搜索')}}</text>
 		</view>
 	</view>
 </template>
@@ -41,6 +41,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 			}
 		},
 		onLoad() {
+			let that = this
 			uni.getLocation({
 				type: 'wgs84',
 				success: function (res) {
@@ -49,7 +50,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				},
 				fail() {
 					uni.showModal({
-						content: "请手动开启位置服务",
+						content: this.$t('请手动开启位置服务'),
 						success(res) {
 							if (res.confirm) {
 								console.log('用户点击确定');
@@ -101,7 +102,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				this.connectNum++
 				if(this.connectNum>5){ //失败5次以上将按钮状态改为未连接时的文字
 					this.$set(this.blueToothStateArr,index,0)
-					uni.showToast({icon:'none',title: "蓝牙连接失败，请手动重连"})
+					uni.showToast({icon:'none',title: this.$t("蓝牙连接失败，请手动重连")})
 					this.connectNum = 0
 					return
 				}
@@ -189,7 +190,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 													  fail:(res)=> {
 														console.log('启动notify服务失败', res.errMsg)
 														that.$set(that.blueToothStateArr,index,0)
-														uni.showToast({icon:'none',title: "启动notify服务失败"})
+														uni.showToast({icon:'none',title: that.$t("启动notify服务失败")})
 													  }
 													})
 				
@@ -199,7 +200,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 											fail:(res)=>{
 												console.log(res)
 												that.$set(that.blueToothStateArr,index,0)
-												uni.showToast({icon:'none',title: "获取特征值失败"})
+												uni.showToast({icon:'none',title:that.$t("获取特征值失败")})
 											}
 										})
 										
@@ -209,7 +210,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 								fail(err) {
 									console.error(err)
 									that.$set(that.blueToothStateArr,index,0)
-									uni.showToast({icon:'none',title: "获取服务失败"})
+									uni.showToast({icon:'none',title: that.$t("获取服务失败")})
 								}
 								
 							})
@@ -218,7 +219,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						// that.getServices()
 					},
 					fail(res) {
-						uni.showToast({icon:'none',title: "连接失败,尝试第"+that.connectNum+"次重连"})
+						uni.showToast({icon:'none',title: that.$t("连接失败,尝试第")+that.connectNum+that.$t("次重连")})
 						console.log("蓝牙连接第"+that.connectNum+"次失败",res)
 
 						setTimeout(()=>{
@@ -266,7 +267,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					},
 					fail(err) {
 						uni.showToast({
-							title: "蓝牙未开启，请手动开启蓝牙",
+							title: that.$t("蓝牙未开启，请手动开启蓝牙"),
 							icon: "none"
 						})
 						uni.stopPullDownRefresh() //关闭动画
@@ -287,10 +288,10 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						console.log(res.deviceId+'断开连接')
 						that.$set(that.blueToothStateArr,that.usedDeviceIndex,0)
 						if(that.isManualClose){
-							uni.showToast({icon:'none',title: "手动断开连接"})
+							uni.showToast({icon:'none',title: that.$t("手动断开连接")})
 							that.isManualClose = false
 						}else{ //被动断开连接
-							uni.showToast({icon:'none',title: "设备连接断开"})
+							uni.showToast({icon:'none',title: that.$t("设备连接断开")})
 							setTimeout(()=>{
 								//1秒后自动重连
 								if(res.deviceId==getApp().globalData.deviceCoreData.deviceId){
@@ -322,7 +323,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 									//执行到这一步才能写数据
 									that.$set(that.blueToothStateArr,that.usedDeviceIndex,2) //重连成功，将按钮文字重新改为断开			
 									uni.showToast({
-										title:'重连成功',
+										title:that.$t('重连成功'),
 										icon:'none'
 									})
 								  },

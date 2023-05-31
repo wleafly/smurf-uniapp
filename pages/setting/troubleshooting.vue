@@ -29,7 +29,7 @@
 			return {
 				isWait:true,
 				isUseful:false,
-				sequenceArr:["连接设备"],
+				sequenceArr:[this.$t("连接设备")],
 				statusArr:[0,0,0] //0等待，1成功，2失败
 			};
 		},
@@ -69,7 +69,7 @@
 					  }
 					  if(isConnect){
 						  that.statusArr[0] = 1
-						  that.sequenceArr.push("测试指令")
+						  that.sequenceArr.push(that.$t("测试指令"))
 						  let haveHeadData = false
 						  let isSendSuccess = false
 						  let isFirstGetData = true
@@ -77,12 +77,12 @@
 						  let getFirstValue = true
 						  setTimeout(()=>{ //30秒没接到花括号数据，则指令测试失败
 							if(isFirstGetData){
-								that.showModal("未获取到数据")
+								that.showModal(that.$t("未获取到数据"))
 								that.statusArr[1] = 2
 								that.isWait = false
 							}else{
 								if(!haveHeadData){
-								 that.showModal("数据获取异常，无法识别传感器类型")
+								 that.showModal(that.$t("数据获取异常，无法识别传感器类型"))
 								 that.statusArr[2] = 2
 								 that.isWait = false
 								}
@@ -94,7 +94,7 @@
 							if(isFirstGetData){
 								console.log('第一次收到数据')
 								that.statusArr[1] = 1
-								that.sequenceArr.push("分析数据")
+								that.sequenceArr.push(that.$t("分析数据"))
 								isFirstGetData = false
 
 							}
@@ -129,21 +129,21 @@
 										that.statusArr[2] = 2
 										that.isUseful = false
 										that.isWait = false
-										that.showModal("电量不足,请及时充电")
+										that.showModal(that.$t("电量不足,请及时充电"))
 									}
 
 								}
 							}
 
 							},()=>{ //写数据失败时
-							  that.showModal("指令发送失败")
+							  that.showModal(that.$t("指令发送失败"))
 							  that.sequenceArr[1] = 2
 							  that.isWait = false
 						  })
 
 					  }else{
 						  this.isWait = false
-						  that.showModal("设备连接断开")
+						  that.showModal(that.$t("设备连接断开"))
 						  that.statusArr[0] = 2
 					  }
 				    
@@ -151,7 +151,7 @@
 				})
 			}else{
 				this.isWait = false
-				this.showModal("请先连接设备")
+				this.showModal(this.$t("请先连接设备"))
 				this.statusArr[0] = 2
 			}
 			

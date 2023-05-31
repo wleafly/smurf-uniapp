@@ -2,22 +2,24 @@
 	<view>
 		<u-cell-group>
 			<u-cell
-			    :title="i18n('simplifiedChinese')"
+			    title="中文(简体)"
 				:clickable="true"
 				size="large"
-				@click="choose(1)"
+				@click="choose('zh-Hans')"
 				icon="/static/zh.png"
+				:style="currentLanguage=='en'?'':'background-color: #eee'"
 			></u-cell>
 			<u-cell
-			    :title="i18n('english')"
+			    title="English"
 				:clickable="true"
-				@click="choose(2)"
+				@click="choose('en')"
 				size="large"
 				icon="/static/en.png"
+				:style="currentLanguage=='en'?'background-color: #eee':''"
 			></u-cell>
 		</u-cell-group>
 		
-		<button @click="change" class="btn">{{$t('deviceName_button')}}</button>
+		<!-- <button @click="change" class="btn">{{$t('确认修改')}}</button>s -->
 	</view>
 </template>
 
@@ -26,44 +28,19 @@
 		data() {
 			return {
 				language:-1,
+				currentLanguage:this.$i18n.locale
 			}
 		},
+
 		onReady() {
 			
 		},
 		methods:{
-			//为控件的属性动态绑定内容
-			i18n(key) {
-			    return this.$i18n.messages[this.$i18n.locale][key]
-			},
-			choose(index){
-				if(index == 1){
-					this.index = 1
-					console.log('点击简体中文')
-				}else if (index == 2){
-					this.index = 2
-					console.log('点击English')
-				}
-			},
-			change(){
-				if (this.index == 1){
-					this.$i18n.locale = 'zh-Hans';
-					uni.setStorageSync('lang', 'zh-Hans');
-				}else if (this.index == 2){
-					this.$i18n.locale = 'en';
-					uni.setStorageSync('lang', 'en');
-				}
-				
-				let lang = uni.getStorageSync('lang') || 'zh-Hans'
-				if (lang === 'zh-Hans') {
-				  lang = 'en'
-				} else {
-				  lang = 'zh-Hans'
-				}
-				uni.setStorageSync('lang', lang)
-				uni.reLaunch({
-				  url: '/pages/index/index'
-				})
+
+			choose(lang){
+				this.currentLanguage=lang
+				this.$i18n.locale = lang;
+				uni.setLocale(lang)
 			}
 		}
 	}

@@ -7,21 +7,21 @@
 		<!-- 修改时间的弹窗 -->
 		<uni-popup ref="popup" type="dialog">
 			<view class="alter_time_view">
-				<view style="margin-top: 20rpx;color: gray;">时间校准</view>
-				<input type="text" v-model:value="interval_input" placeholder="请输入间隔时间" class="input_style"
+				<view style="margin-top: 20rpx;color: gray;">{{$t('时间校准')}}</view>
+				<input type="text" v-model:value="interval_input" :placeholder="$t('请输入间隔时间')" class="input_style"
 					style="margin-top: 20rpx;" />
-				<input type="text" v-model:value="testTime_input" placeholder="请输入测试时间" class="input_style"
+				<input type="text" v-model:value="testTime_input" :placeholder="$t('请输入测试时间')" class="input_style"
 					style="margin: 20rpx;" />
 				<view class="btn_group">
-					<view style="border-right: 1rpx solid #eee;width: 50%;text-align: center;" @click="close_popup()">取消
+					<view style="border-right: 1rpx solid #eee;width: 50%;text-align: center;" @click="close_popup()">{{$t('取消')}}
 					</view>
-					<view style="width: 50%;text-align: center;color: #007AFF" @click="confirm_alter_time()">确定</view>
+					<view style="width: 50%;text-align: center;color: #007AFF" @click="confirm_alter_time()">{{$t('确定')}}</view>
 				</view>
 			</view>
 		</uni-popup>
 		
 		<view style="display: flex;flex-direction: row;align-items: center;justify-content: space-between;padding: 0rpx 20rpx;">
-			<view class="head" @click="test">{{deviceArr.length>1?'多设备':(deviceArr.length==1?(deviceArr[0].type==1?'多参数':paramArr[deviceArr[0].param]):'未连接')}}</view>
+			<view class="head" >{{deviceArr.length>1?$t('多设备'):(deviceArr.length==1?(deviceArr[0].type==1?$t('多参数'):$t(paramArr[deviceArr[0].param])):$t('未连接'))}}</view>
 			<view style="display: flex;">
 				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #a8a8a8;">{{deviceName}}</text>
 				<u-loading-icon v-if="homeConfig.waitFirstValue" mode="circle" style="margin-left: 10rpx;"></u-loading-icon>
@@ -29,16 +29,16 @@
 			<!-- 电池 -->
 			<view class="flex_row_between" style="justify-content: center;align-items: center;">
 				<view class="battery" style="display: inline-block;">
-					<view style="z-index: 1;position: relative;">{{eq}}</view>
+					<view style="z-index: 1;position: relative;">{{eq}}</view> 
 					<view :style="{'width': eq+'%','background-color': batteryColor}" style="z-index: 0;position: relative;bottom:30rpx;height: 100%;border-radius: 7rpx;"></view>
 				</view>
 				<view style="background-color: white;width: 7rpx;height: 18rpx;border-top-right-radius: 7rpx;border-bottom-right-radius: 7rpx;"></view>
 			</view>
 		</view>
 		
-		<view class="element_style flex_row_between" style="margin: 20rpx 15rpx;">
-			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">间隔时间{{valueArr[index_with_time]?(valueArr[index_with_time].interval?': '+valueArr[index_with_time].interval+'min':''):''}}</view>
-			<view class="time_style" @click="toAlterTime()">测试时间{{valueArr[index_with_time]?(valueArr[index_with_time].testTime?': '+valueArr[index_with_time].testTime+'min':''):''}}</view>
+		<view class="element_style flex_row_between" style="margin: 20rpx 15rpx;"> 
+			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">{{$t('间隔时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].interval?': '+valueArr[index_with_time].interval+'min':''):''}}</view>
+			<view class="time_style" @click="toAlterTime()">{{$t('测试时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].testTime?': '+valueArr[index_with_time].testTime+'min':''):''}}</view>
 		</view>
 		
 		<view v-if="deviceArr[0]">
@@ -46,7 +46,7 @@
 				<view v-for="device,index in deviceArr" class="chart_view" :key="index">
 					<view class="flex_row_between" style="padding: 0rpx 40rpx;height: 100rpx;align-items: center;">
 						<view class="flex_row_between" style="width: 80%;font-size: 35rpx;">
-							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">{{paramArr[device.param]}}</view>
+							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">{{$t(paramArr[device.param])}}</view>
 							<view>{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().value:""}}{{unitArr[device.param]}}</view>
 						</view>
 						<image v-if="deviceArr.length!=0" :src="chartDisplay[index]?'../../static/折叠.png':'../../static/展开.png'" @click="showOrFold(index)" style="width: 50rpx;height: 50rpx"></image>
@@ -55,14 +55,14 @@
 					<view v-if="chartDisplay[index]">
 						<view class="flex_row_between" style="padding: 20rpx 30rpx;border-top: 1px solid lightgray;">
 							<view class="flex_row_between" style="width: 80%;">
-								<view style="color: gray;">地址：{{device.address}}</view>
-								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''">温度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().temperature:""}} ℃</view>
+								<view style="color: gray;">{{$t('地址')}}：{{device.address}}</view>
+								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''">{{$t('温度')}}</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().temperature:""}} ℃</view>
 							</view>
 						</view>
 						
 						<view v-if="device.param==9" class="flex_row_between" style="padding: 0rpx 30rpx;margin-bottom: 20rpx;">
 							<view class="flex_row_between" style="width: 80%;">
-								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''">浊度</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().mud:""}} NTU</view>
+								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''">{{$t('浊度')}}</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().mud:""}} NTU</view>
 								<view @click="switchChart(index,3)" ><text :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''">BOD</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().bod:""}} mg/L</view>
 							</view>
 						</view>
@@ -77,10 +77,10 @@
 			<view v-else>
 				<view class="element_style" style="margin: 15rpx;padding: 20rpx 10rpx;">
 					<view style="display: flex;flex-wrap: wrap;">
-						<view @click="switchManyParamChart(-1)" :style="manyParamLightOption==-1?'color: #007AFF;':''" class="item" style="border-right: 1rpx solid gray;">温度<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].temperature:''}}</view>
+						<view @click="switchManyParamChart(-1)" :style="manyParamLightOption==-1?'color: #007AFF;':''" class="item" style="border-right: 1rpx solid gray;">{{$t('温度')}}<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].temperature:''}}</view>
 						<view @click="switchManyParamChart(index)"  v-for="paramItem,index in originalManyParamsConfig" class="item" 
 						:style="((index-1)%3==0?'':'border-right: 1rpx solid gray;')+(manyParamLightOption==index?'color: #007AFF;':'')" >
-							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?paramItem:'--'):paramItem):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':manyParamsConfig[index-1]):paramItem)}}<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
+							{{index<2?(manyParamsConfig?(manyParamsConfig[0]=='COD'?$t(paramItem):'--'):$t(paramItem)):(manyParamsConfig?(manyParamsConfig[index-1]=='未连接'?'--':$t(manyParamsConfig[index-1])):$t(paramItem))}}<text>\n</text>{{valueArr.length?valueArr[valueArr.length-1].values[index]:''}}
 						</view>
 					</view>
 					<qiun-data-charts type="line" :chartData="chartDataArr[0]" :opts="opts_many" :ontouch="true"/>
@@ -91,7 +91,7 @@
 
 		
 		<view v-if="showLoading && deviceArr.length==0" class="remind_connect">
-			<loading txt="正在获取数据"></loading>
+			<loading :txt="$t('正在获取数据')"></loading>
 		</view>
 		
 
@@ -160,8 +160,8 @@
 				manyParamsConfig:null,
 				showLoading:false,
 				manyParamChartData:null,
-				originalManyParamsConfig:["化学需氧量(COD)","浊度(COD)",'电导率/盐度','PH','ORP','溶解氧','铵氮/离子类','浊度'],
-				originalManyParamsConfigUnit:["mg/L","NTU","mS/cm","","mV","mg/L","mg/L","NTU"],
+				originalManyParamsConfig:getApp().globalData.originalManyParamsConfig,
+				originalManyParamsConfigUnit:getApp().globalData.originalManyParamsConfigUnit,
 				homeConfig:getApp().globalData.homeConfig //判断是否收到花括号数据，在收到第一条后将waitFirstValue属性改为false，使用对象是为了和全局变量绑定
 			}
 		},
@@ -184,7 +184,7 @@
 					if(this.deviceArr.length==0){
 						uni.showToast({
 							icon:"none",
-							title:"数据获取失败"
+							title:this.$t('数据获取失败')
 						})
 						getApp().globalData.firstLoading = true //下次进入时，会重发f900
 					}
@@ -297,7 +297,7 @@
 						let msg = 'FC'+intervals_hex+testTime_hex
 
 						uni.showLoading({
-							title:'更改中'
+							title:this.$t('更改中')
 						})
 						
 						let count = 0
@@ -307,7 +307,7 @@
 							uni.hideLoading() //超时关闭加载
 							if(!alter_success){
 								uni.showToast({
-									title:"更改失败，请重新发送",
+									title:this.$t("更改失败，请重新发送"),
 									icon:"none"
 								})
 							}
@@ -318,7 +318,7 @@
 								if(str.search("[OK]")!=-1){  //返回的数据带有[OK],表明时间修改成功
 									uni.hideLoading()  //主动关闭加载
 									uni.showToast({
-										title:"修改成功",
+										title:this.$t("修改成功"),
 										icon:"none"
 									})
 									getApp().globalData.isFirstData = true //时间修改成功后的第一条数据是带时间的
@@ -340,13 +340,13 @@
 						this.$refs.popup.close()
 					} else {
 						uni.showToast({
-							title: "请输入1~255之间的整数",
+							title: this.$t("请输入1~255之间的整数"),
 							icon: 'none'
 						})
 					}
 				} else {
 					uni.showToast({
-						title: "请输入1~255之间的整数",
+						title: this.$t("请输入1~255之间的整数"),
 						icon: 'none'
 					})
 				}
@@ -461,11 +461,11 @@
 				let name = "" //点击某一项时，显示的参数名称
 				if(type == 1){
 					tempArr = itemArr.map(item=>{return item.temperature})
-					name = "温度"
+					name = this.$t("温度")
 				}
 				else if(type == 2){
 					tempArr = itemArr.map(item=>{return item.mud})
-					name = "浊度"
+					name = this.$t("浊度")
 				}
 				else if(type == 3){
 					tempArr = itemArr.map(item=>{return item.bod})
@@ -473,7 +473,7 @@
 				}
 				else{
 					tempArr = itemArr.map(item=>{return item.value}) 
-					name = this.paramArr[this.deviceArr[index].param]
+					name = this.$t(this.paramArr[this.deviceArr[index].param]) 
 				} //type为0的情况，即化学参数
 				
 				let categories = []
@@ -495,11 +495,8 @@
 					]
 				}
 			},
-			//跳转到时间校准页面
+			//打开时间校准
 			toAlterTime(){
-				// uni.navigateTo({
-				// 	url:'/pages/setting/timeCalibration'
-				// })
 				this.open_alter_time_popup()
 			}
 			
