@@ -14,8 +14,8 @@
 			<view>{{i}}</view>
 			
 			<u-loading-icon v-if="statusArr[index]==0" color="#89B7EC" mode="semicircle"></u-loading-icon>
-			<image v-else-if="statusArr[index]==1" src="../../static/勾.png" style="width: 40rpx;height: 40rpx;"></image>
-			<image v-else src="../../static/叉.png" style="width: 40rpx;height: 40rpx;"></image>
+			<image v-else-if="statusArr[index]==1" src="../../static/tick.png" style="width: 40rpx;height: 40rpx;"></image>
+			<image v-else src="../../static/fork.png" style="width: 40rpx;height: 40rpx;"></image>
 		</view>
 		
 		<!-- <view v-if="!isWait" style="color: darkgray;text-align: center;margin-top: 180rpx;">错误码：10003，蓝牙设备断开连接</view> -->

@@ -368,35 +368,35 @@
 				let tempArr
 				let timer = setInterval(()=>{
 					
-					switch(Math.round(3*Math.random())){
-						case 0:  //一般数据
-							tempArr = "[0,8,4,21,22,0,0,]"
-							break
-						case 1:  //ORP
-							tempArr = "[0,4,16,32,0,0,0,]"
-							break
-						case 2:  //COD
-							tempArr = "[0,9,3,32,54,43,1,]"
-							break
-						case 3:  //多参数
-							tempArr = "[1,4,0,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
-					}
-					this.strToNumArr(tempArr)
-					
 					// switch(Math.round(3*Math.random())){
 					// 	case 0:  //一般数据
-					// 		tempArr = "[0,8,21,22,]"
+					// 		tempArr = "[0,8,4,21,22,0,0,]"
 					// 		break
 					// 	case 1:  //ORP
-					// 		tempArr = "[0,4,32,]"
+					// 		tempArr = "[0,4,16,32,0,0,0,]"
 					// 		break
 					// 	case 2:  //COD
 					// 		tempArr = "[0,9,3,32,54,43,1,]"
 					// 		break
 					// 	case 3:  //多参数
-					// 		tempArr = "[1,4,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
+					// 		tempArr = "[1,4,0,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
 					// }
 					// this.strToNumArr(tempArr)
+					
+					switch(Math.round(3*Math.random())){
+						case 0:  //一般数据
+							tempArr = "[0,8,21,22,]"
+							break
+						case 1:  //ORP
+							tempArr = "[0,4,32,]"
+							break
+						case 2:  //COD
+							tempArr = "[0,9,3,32,54,43,1,]"
+							break
+						case 3:  //多参数
+							tempArr = "[1,4,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
+					}
+					this.strToNumArr(tempArr)
 					
 					// this.isNewDevice = true
 					// switch(Math.round(3*Math.random())){

@@ -49,7 +49,7 @@
 							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">{{$t(paramArr[device.param])}}</view>
 							<view>{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().value:""}}{{unitArr[device.param]}}</view>
 						</view>
-						<image v-if="deviceArr.length!=0" :src="chartDisplay[index]?'../../static/折叠.png':'../../static/展开.png'" @click="showOrFold(index)" style="width: 50rpx;height: 50rpx"></image>
+						<image v-if="deviceArr.length!=0" :src="chartDisplay[index]?'../../static/fold.png':'../../static/show.png'" @click="showOrFold(index)" style="width: 50rpx;height: 50rpx"></image>
 					</view>
 					
 					<view v-if="chartDisplay[index]">
@@ -601,7 +601,9 @@
 	}
 	.outer{
 		padding: 30rpx;
-		background-image: url('../../static/background.jpg'); //小程序下背景无效
+		/*#ifndef MP*/  //小程序下背景无效
+		background-image: url('../../static/background.jpg'); 
+	    /*#endif*/
 		background-size: 100% auto;
 		background-repeat: no-repeat;
 		min-height: 500rpx;

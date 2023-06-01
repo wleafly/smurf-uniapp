@@ -2,19 +2,19 @@
 	<view class="title">
 		<u-cell-group>
 			<u-cell :title="i18n('deviceName')" size="large" isLink :clickable="true" url="/pages/setting/deviceName"
-				icon="/static/设备名称.png"></u-cell>
+				icon="/static/device_name.png"></u-cell>
 			<u-cell :title="i18n('historyData')" size="large" isLink :clickable="true" url="/pages/setting/historyData"
 				icon="/static/ic_history_data.png"></u-cell>
 			<u-cell :title="i18n('calibration')" size="large" isLink :clickable="true" url="/pages/setting/calibration"
-				icon="/static/校准功能.png"></u-cell>
+				icon="/static/calibration.png"></u-cell>
 			<u-cell :title="i18n('troubleShoot')" size="large" isLink :clickable="true"
-				url="/pages/setting/troubleshooting" icon="/static/故障信息.png"></u-cell>
+				url="/pages/setting/troubleshooting" icon="/static/fault_info.png"></u-cell>
 			<u-cell :title="i18n('language')" size="large" isLink :clickable="true" url="/pages/setting/language"
-				icon="/static/多语言.png"></u-cell>
+				icon="/static/multi_language.png"></u-cell>
 			<u-cell :title="i18n('setting')" size="large" isLink :clickable="true" url="/pages/setting/set"
-				icon="/static/系统设置.png"></u-cell>
+				icon="/static/system_setting.png"></u-cell>
 			<u-cell :title="i18n('cache')" size="large" isLink :clickable="true" url="/pages/setting/download"
-				icon="/static/下载.png"></u-cell> 
+				icon="/static/download.png"></u-cell> 
 		</u-cell-group>
 
 

@@ -3,7 +3,7 @@
 		<!-- 蓝牙设备列表 -->
 		<view v-for="item,index in blueToothList" class="blue_item" :style="blueToothStateArr[index]==2?'background-color: #E5F3FF':''">
 			<view style="display: flex;flex-direction: row;align-items: center;">
-				<image src="../../static/蓝牙-带背景.png" style="width: 100rpx;height: 100rpx;"></image>
+				<image src="../../static/bluetooth_blue.png" style="width: 100rpx;height: 100rpx;"></image>
 				<view style="margin: 0rpx 20rpx;">
 					<view class="text-overflow" style="font-size: 35rpx;width: 300rpx;">{{item.name}}</view>
 					<view style="color: darkslategray;font-size: 25rpx">{{item.deviceId}}</view>
@@ -21,7 +21,7 @@
 		
 		
 		<view v-if="!blueToothList.length" class="content" style="height: 600rpx;">
-			<image src="../../static/蓝牙.png" style="width: 120rpx;height: 120rpx"></image>
+			<image src="../../static/bluetooth_gray.png" style="width: 120rpx;height: 120rpx"></image>
 			<text class="no_blue" style="font-size: 35rpx;font-weight: bold;">{{$t('没有发现蓝牙设备')}}</text>
 			<text class="no_blue">{{$t('下拉搜索')}}</text>
 		</view>
@@ -72,6 +72,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				
 				let deviceId = this.blueToothList[index].deviceId
 				let that = this
+				console.log('点击的状态是'+this.blueToothStateArr[index])
 				if(this.blueToothStateArr[index]==0){ //点击了连接
 					this.$set(this.blueToothStateArr,index,1) //状态改为正在连接
 					uni.stopPullDownRefresh() //关闭动画
@@ -83,9 +84,11 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					setTimeout(()=>{this.createBLEConnection(index,deviceId)},1000)
 					
 				}else if(this.blueToothStateArr[index]==2){ //点击了断开
+					console.log('点击了断开')
 					//关闭与对应蓝牙设备的连接
 					this.$set(that.blueToothStateArr,index,0)
 					this.isManualClose = true
+					console.log('connectBle方法中的isManualClose'+this.isManualClose)
 					uni.closeBLEConnection({ 
 					  deviceId,
 					  success(res) {
@@ -287,10 +290,13 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						// getApp().globalData.firstLoading = true
 						console.log(res.deviceId+'断开连接')
 						that.$set(that.blueToothStateArr,that.usedDeviceIndex,0)
+						console.log('isManualClose现在是'+that.isManualClose)
 						if(that.isManualClose){
+							console.log('手动断开连接')
 							uni.showToast({icon:'none',title: that.$t("手动断开连接")})
 							that.isManualClose = false
 						}else{ //被动断开连接
+							console.log('被动断开连接')
 							uni.showToast({icon:'none',title: that.$t("设备连接断开")})
 							setTimeout(()=>{
 								//1秒后自动重连
@@ -339,6 +345,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 						},fail(res) {
 							console.log("重连失败,剩余重连"+num+"次")
 							setTimeout(()=>{
+								console.log('执行了reConnectBle的setTimeout代码')
 								that.reConnectBle(--num)
 							},3000)
 							

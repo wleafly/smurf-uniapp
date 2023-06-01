@@ -309,13 +309,16 @@
 			// console.log(uni.getStorageSync('2023-05-23'))
 			
 			let res = uni.getStorageInfoSync();
+			let orderDataArr = []
 			for(let key of res.keys){
 				if(key.includes('-')){
 					let arr = key.split('-')
 					if(arr.length==3 && /^\d+$/.test(arr[0]) && /^\d+$/.test(arr[1]) && /^\d+$/.test(arr[2]))
-					this.dateArr.unshift(key)
+					// this.dateArr.unshift(key)
+					orderDataArr.push(key)
 				}
 			}
+			this.dateArr = orderDataArr.sort().reverse()
 			// console.log(this.dateArr)
 			
 			this.paramArr = getApp().globalData.paramArr
