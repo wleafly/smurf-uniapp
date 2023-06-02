@@ -21,7 +21,7 @@
 		</uni-popup>
 		
 		<view style="display: flex;flex-direction: row;align-items: center;justify-content: space-between;padding: 0rpx 20rpx;">
-			<view class="head" >{{deviceArr.length>1?$t('多设备'):(deviceArr.length==1?(deviceArr[0].type==1?$t('多参数'):$t(paramArr[deviceArr[0].param])):$t('未连接'))}}</view>
+			<view class="head">{{deviceArr.length>1?$t('多设备'):(deviceArr.length==1?(deviceArr[0].type==1?$t('多参数'):$t(paramArr[deviceArr[0].param])):$t('未连接'))}}</view>
 			<view style="display: flex;">
 				<text style="text-align: center;font-size: 40rpx;color: #ffffff;font-weight: bold;text-shadow: 2px 2px 1px #a8a8a8;">{{deviceName}}</text>
 				<u-loading-icon v-if="homeConfig.waitFirstValue" mode="circle" style="margin-left: 10rpx;"></u-loading-icon>
@@ -47,7 +47,8 @@
 					<view class="flex_row_between" style="padding: 0rpx 40rpx;height: 100rpx;align-items: center;">
 						<view class="flex_row_between" style="width: 80%;font-size: 35rpx;">
 							<view  @click="switchChart(index,0)" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">{{$t(paramArr[device.param])}}</view>
-							<view>{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().value:""}}{{unitArr[device.param]}}</view>
+							<view>{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().value:''}}{{unitArr[device.param]}}</view>
+							<!-- <view>{{valueArr.findLastIndex((item)=>{return ((item.param==device.param)&&(item.address?(item.address==device.address):true))&&(item.address?(item.address==device.address):true)})}}{{unitArr[device.param]}}</view> -->
 						</view>
 						<image v-if="deviceArr.length!=0" :src="chartDisplay[index]?'../../static/fold.png':'../../static/show.png'" @click="showOrFold(index)" style="width: 50rpx;height: 50rpx"></image>
 					</view>
@@ -56,14 +57,14 @@
 						<view class="flex_row_between" style="padding: 20rpx 30rpx;border-top: 1px solid lightgray;">
 							<view class="flex_row_between" style="width: 80%;">
 								<view style="color: gray;">{{$t('地址')}}：{{device.address}}</view>
-								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''">{{$t('温度')}}</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().temperature:""}} ℃</view>
+								<view v-if="device.param!=4"  @click="switchChart(index,1)"><text :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''">{{$t('温度')}}</text>：{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().temperature:""}} ℃</view>
 							</view>
 						</view>
 						
 						<view v-if="device.param==9" class="flex_row_between" style="padding: 0rpx 30rpx;margin-bottom: 20rpx;">
 							<view class="flex_row_between" style="width: 80%;">
-								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''">{{$t('浊度')}}</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().mud:""}} NTU</view>
-								<view @click="switchChart(index,3)" ><text :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''">BOD</text>：{{valueArr.filter((item)=>{return item.param==device.param}).pop()?valueArr.filter((item)=>{return item.param==device.param}).pop().bod:""}} mg/L</view>
+								<view @click="switchChart(index,2)" ><text :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''">{{$t('浊度')}}</text>：{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().mud:""}} NTU</view>
+								<view @click="switchChart(index,3)" ><text :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''">BOD</text>：{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().bod:""}} mg/L</view>
 							</view>
 						</view>
 						
@@ -165,14 +166,14 @@
 				homeConfig:getApp().globalData.homeConfig //判断是否收到花括号数据，在收到第一条后将waitFirstValue属性改为false，使用对象是为了和全局变量绑定
 			}
 		},
-		onload(){
-			
+		onLoad(){
+
 		},
 
 		onShow() {
 			// console.log('执行了onShow')
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
-			
+
 			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
 				this.index_with_time = 0
 				this.showLoading = true
@@ -190,7 +191,7 @@
 					}
 				},30000) //30秒加载不到数据就自动关闭动画
 			}
-			
+
 			this.deviceName = getApp().globalData.deviceName //app.vue中应为""
 			this.deviceArr = getApp().globalData.deviceArr //app.vue中应为[]
 			this.valueArr = getApp().globalData.valueArr //app.vue中应为[]
@@ -204,8 +205,10 @@
 					this.setElectric() 
 				}
 			},3000000)
-
+			this.$forceUpdate()
 			// this.setChart()
+
+			
 
 		},
 		
@@ -353,7 +356,7 @@
 
 			},
 			test(){ 
-
+				
 				getApp().globalData.deviceArr.push({address:3,type:0,param:9})
 				getApp().globalData.deviceArr.push({address:6,type:0,param:6})
 				getApp().globalData.deviceArr.push({address:16,type:0,param:4})
@@ -378,7 +381,7 @@
 
 			},
 			setChart(){
-				
+				console.log('setChart方法执行了')
 				this.deviceArr.forEach((item,index)=>{  //遍历设备数组
 					let itemArr
 					let categories = []
@@ -386,24 +389,23 @@
 					let param_name
 					let i=1
 					if(item.type == 1){ //多参数情况
-						itemArr = this.valueArr //获取全部值数据，作为图表的数据来源
-						for(var it of itemArr){
-							categories.push(i)
-							series_data.push(it.temperature)//多参数默认显示温度
-							i++
-						}
+						// itemArr = this.valueArr //获取全部值数据，作为图表的数据来源
+						// for(var it of itemArr){
+						// 	categories.push(i)
+						// 	series_data.push(it.temperature)//多参数默认显示温度
+						// 	i++
+						// }
 						param_name = ''
 					}else{ //一般情况
-						itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
-						for(var it of itemArr){
-							categories.push(i)
-							series_data.push(it.value)//单参数默认显示主参数值
-							i++
-						}
+						// itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
+						// for(var it of itemArr){
+						// 	categories.push(i)
+						// 	series_data.push(it.value)//单参数默认显示主参数值
+						// 	i++
+						// }
 						param_name = this.paramArr[this.deviceArr[index].param]
 					}
 
-					// itemArr.map(item=>{return item.value})
 					this.chartDataArr[index]={
 						categories: categories,
 						series: [
@@ -456,7 +458,7 @@
 			switchChart(index,type){
 				this.$set(this.lightOptions,index,type)
 				// this.lightOptions[index] = type
-				let itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param})  //取到索引对应传感器的值的数组
+				let itemArr = this.valueArr.filter((item)=>{return (item.param == this.deviceArr[index].param) && (item.address?(item.address==this.deviceArr[index].address):true)})  //取到索引对应传感器的值的数组
 				let tempArr = []
 				let name = "" //点击某一项时，显示的参数名称
 				if(type == 1){
@@ -504,12 +506,14 @@
 		
 		watch:{
 			deviceArr(){ //监听到deviceArr发生变化后，要重构图表列表
+				console.log('deviceArr更新了')
 				if(this.deviceArr.length){
 					this.showLoading = false //事实上只需要执行一次就够了，反正deviceArr也就几条
 				}
 				this.setChart()
 			},
 			valueArr(){ //valueArr加入新数据后，要对相应折线图的数据重新赋值
+				// console.log('valueArr发送了变化')
 				if(this.homeConfig.waitFirstValue){ //如果等待花括号数据的加载动画还在显示，则关闭
 					this.homeConfig.waitFirstValue = false
 				}
@@ -541,7 +545,7 @@
 						this.setElectric()
 					}
 					let newValue = this.valueArr[this.valueArr.length-1]
-					let index = this.deviceArr.findIndex((item)=>{return item.param==newValue.param}) //根据param获取新数据在列表中的索引
+					let index = this.deviceArr.findIndex((item)=>{return (item.param==newValue.param) && (newValue.address?(item.address == newValue.address):true)}) //根据param获取新数据在列表中的索引
 					let insertValue  
 					if(this.lightOptions[index]==0){ //lightOptions[index]是新加入的数据所对应的图表中所选的参数，0主要参数、1温度、2浊度、3BOD
 						insertValue = newValue.value

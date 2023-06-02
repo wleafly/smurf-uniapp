@@ -279,6 +279,7 @@
 						let param = getApp().globalData.addressToParamMap[numArr[0]]
 						if(param!=4){ //不为ORP
 							record = {
+								address:numArr[0],
 								param:param,
 								value:numArr[1],
 								temperature:numArr[2],
@@ -290,6 +291,7 @@
 							}
 						}else{ //ORP
 							record = {
+								address:numArr[0],
 								param:param,
 								value:numArr[1],
 								electric:numArr[2] 

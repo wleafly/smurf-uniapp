@@ -73,6 +73,11 @@
         "usingComponents" : true,
         "optimization" : {
             "subPackages" : true
+        },
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "连接蓝牙设备需开启位置服务"
+            }
         }
     },
     "mp-alipay" : {

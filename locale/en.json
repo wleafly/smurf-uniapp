@@ -72,6 +72,7 @@
 	"连接":"connect",
 	"断开":"break",
 	"蓝牙连接失败，请手动重连":"Bluetooth connection failed, please reconnect manually",
+	"连接失败":"connection failed",
 	"启动notify服务失败":"Failed to start the notify service",
 	"获取特征值失败":"Failed to obtain the characteristic",
 	"获取服务失败":"Failed to obtain service",
@@ -81,6 +82,8 @@
 	"手动断开连接":"manual disconnect",
 	"设备连接断开":"device disconnection",
 	"重连成功":"Successful reconnection",
+	"设备连接断开，重连中":"device is disconnected,reconnecting now",
+	
 	"新名称包含3-18个数字或字母":"The new name contains 3-18 numbers or letters",
 	"确认修改":"Confirm",
 	"是否要将设备名修改为":"Whether to change the device name to ",
