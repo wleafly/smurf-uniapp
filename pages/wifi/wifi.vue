@@ -6,7 +6,7 @@
 				<image src="../../static/bluetooth_blue.png" style="width: 100rpx;height: 100rpx;"></image>
 				<view style="margin: 0rpx 20rpx;">
 					<view class="text-overflow" style="font-size: 35rpx;width: 300rpx;">{{item.name}}</view>
-					<view style="color: darkslategray;font-size: 25rpx">{{item.deviceId}}</view>
+					<view class="text-overflow" style="color: darkslategray;font-size: 25rpx;width: 300rpx;">{{item.deviceId}}</view>
 					<!-- <view style="color: darkslategray;font-size: 25rpx">可连接</view> -->
 				</view>
 			</view>
@@ -113,7 +113,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					uni.closeBLEConnection({ 
 					  deviceId,
 					  success(res) {
-					    console.log("关闭蓝牙连接",res)
+					    console.log("手动关闭蓝牙连接",res)
 					  }
 					})
 					getApp().globalData.isFirstData = true //重新连接后，数据页要从第一条记录开始算了
@@ -242,7 +242,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 								}
 								
 							})
-						},1000)
+						},2000)
 				
 						// that.getServices()
 					},
@@ -280,7 +280,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 								console.log("搜索蓝牙", res)
 								uni.onBluetoothDeviceFound((res) => {
 									for(var device of res.devices){
-										if(device.localName!=''||device.name!=''){
+										if(device.localName!='' && device.name!=''){
 											console.log(device)
 											that.blueToothStateArr.push(0) //默认状态是未连接
 											that.blueToothList.push(device)

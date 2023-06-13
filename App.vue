@@ -8,9 +8,8 @@
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
-			if(uni.getStorageSync("autoDownload")){
-				getApp().globalData.autoDownload = uni.getStorageSync("autoDownload")
-			}
+
+			
 		},
 		onShow: function() {
 			console.log('App Show')
@@ -88,7 +87,7 @@
 			includeParamArr:[], //历史数据页包含的参数
 			normalValueArr:[],//历史数据页常规参数值数据
 			manyParamValueArr:[],//历史数据页多参数值数据
-			
+			// tempDownloadArr:null//临时存放下载的实时数据，防止过于频繁的读写操作
 
 		},
 		methods:{
@@ -121,6 +120,7 @@
 			},
 			writeValueToBle(msg,handleStr,failOperation){
 				let that = this
+				// console.log(that.$t('连接'))
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
 				uni.writeBLECharacteristicValue({
 					deviceId:getApp().globalData.deviceCoreData.deviceId,
@@ -145,12 +145,12 @@
 							failOperation()
 						}
 						
-						uni.showToast({icon:'none',title: msg+" "+that.$t('发送失败')})
+						uni.showToast({icon:'none',title: msg+" "+'发送失败'})
 						console.log("数据发送失败",err)
 					}
 				})
 			},
-			writeBufferToBle(buffer,handleStr,failOperation){
+			writeBufferToBle(buffer,handleStr,failOperation,writeSuccess){
 				let that = this
 				uni.writeBLECharacteristicValue({
 					deviceId:getApp().globalData.deviceCoreData.deviceId,
@@ -159,7 +159,9 @@
 					value:buffer,
 					success(res) {
 						console.log("buffer发送成功")
-						
+						if(writeSuccess){ 
+							writeSuccess()
+						}
 						uni.onBLECharacteristicValueChange(res => {
 							let resHex = getApp().ab2hex(res.value)
 							let result = getApp().hexCharCodeToStr(resHex)
@@ -169,7 +171,7 @@
 						}) 
 					},
 					fail(err) {
-						uni.showToast({icon:'none',title: that.$t('发送失败')})
+						uni.showToast({icon:'none',title: '发送失败'})
 						console.log("数据发送失败",err)
 					}
 				})
@@ -266,10 +268,7 @@
 					}else{
 						console.log('此型号是老设备')
 					}
-					//如果开启了自动下载实时数据，则此处要添加标记
-					// if(getApp().globalData.autoDownload){
-					// 	this.addStorageRecord("start")
-					// }
+
 				}
 			},
 			storageValue(numArr){  //存数据到全局变量valueArr中，接收参数是一个数字数组
@@ -358,7 +357,20 @@
 			addStorageRecord(record){ //向当天的缓存中添加数据
 				// console.log('插入本地缓存',getDateTime.dateTimeStr('y-m-d'),record)
 				let arr = uni.getStorageSync(getDateTime.dateTimeStr('y-m-d')) || []
+				 /*#ifndef MP*/
 				arr.push(record)
+				/*#endif*/
+				
+				 /*#ifdef MP*/
+				 if(arr.length<1000){
+					 arr.push(record)
+				 }else{ //在小程序端，存储量大于1000条，同类型每10条存一次
+					 if(getApp().globalData.valueArr.length % (getApp().globalData.deviceArr.length*10) < getApp().globalData.deviceArr.length){
+						 arr.push(record)
+					 }
+				 }
+				/*#endif*/
+				
 				uni.setStorageSync(getDateTime.dateTimeStr('y-m-d'),arr)
 			}
 		}

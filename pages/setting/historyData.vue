@@ -31,7 +31,7 @@
 			</view>
 
 			
-			<qiun-data-charts type="line" :chartData="chartData" :opts="opts" :ontouch="true"/>
+			<qiun-data-charts type="line" :chartData="chartData" :opts="opts" :ontouch="true" canvas2d canvasId="chart2d"/>
 			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
 			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
 				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">{{$t("删除历史数据")}}</button>
@@ -47,7 +47,8 @@
 </template>
 
 <script>
-	import * as XLSX from '../../static/excel.js'
+	import * as XLSX from '../../static/excel.js';
+	import getDateTime from '@/common/getdateTime.js';
 	export default {
 		data() {
 			return{
@@ -108,55 +109,71 @@
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 		},
 		onShow() {
-		
-			// this.addData()
+			
 			if(this.normalValueArr.length ==0 && this.manyParamValueArr.length ==0){ //历史数据没存过，自动发f6指令，询问用户要不要读数据
 				let that = this
-				let getNum = false
-				setTimeout(()=>{
-					if(!getNum){
-						uni.showModal({
-							content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
-							success(res) {
-								if(res.confirm){
-									console.log("发送FB")
-									getApp().writeValueToBle("FB",str=>{
-										that.handleStr(str)
+				uni.showModal({
+					content:that.$t("获取历史数据会停止接收实时数据，是否继续"),
+					success(res) {
+						if(res.confirm){
+							let getNum = false
+							setTimeout(()=>{ //超时后没读到条数，询问是否直接FB
+								if(!getNum){
+									uni.showModal({
+										content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
+										success(res) {
+											if(res.confirm){
+												console.log("发送FB")
+												getApp().writeValueToBle("FB",str=>{
+													that.handleStr(str)
+												})
+											}
+										}
 									})
 								}
-							}
-						})
-					}
-				},3000)
-				getApp().writeValueToBle("F6",str=>{
-					console.log(str)
-					if(/^\[\d+\]/.test(str)){
-						let count = parseInt(str.split("[")[1].split("]")[0])
-						if(count && typeof count == "number"){
-							getNum = true
-							if(count<200){
-								getApp().writeValueToBle("FB",str=>{
-									that.handleStr(str)
-								})
-							}else{
-								uni.showModal({
-									content:`${that.$t("共发现")}${count}${that.$t("条历史数据，读取约耗时")}${count*0.047}${that.$t("秒，是否要读取")}`,
-									success(res) {
-										if(res.confirm){
-											console.log("发送FB")
-											getApp().writeValueToBle("FB",str=>{
-												that.handleStr(str)
-											})
+							},7000)
+							getApp().writeValueToBle("F6",str=>{
+								console.log(str)
+								if(str.indexOf('[')!=-1&&str.indexOf(']')!=-1){ 
+									str = str.substring(str.lastIndexOf('['),str.lastIndexOf(']')+1)
+									if(/^\[\d+\]/.test(str)){ //d+不包括0
+										let count = parseInt(str.split("[")[1].split("]")[0])
+										if(count && typeof count == "number"){
+											getNum = true
+											if(count<200){ //小于200条直接发FB
+												getApp().writeValueToBle("FB",str=>{
+													that.handleStr(str)
+												})
+											}else{ 
+												uni.showModal({
+													content:`${that.$t("共发现")}${count}${that.$t("条历史数据，读取约耗时")}${count*0.047}${that.$t("秒，是否要读取")}`,
+													success(res) {
+														if(res.confirm){
+															console.log("发送FB")
+															getApp().writeValueToBle("FB",str=>{
+																that.handleStr(str)
+															})
+														}
+													}
+												})
+											}
 										}
 									}
-								})
-							}
+									if(str=='[0]'){
+										getNum = true
+										uni.showToast({
+											icon:'none',
+											title:'暂无历史数据'
+										})
+									}
+								}
+
+								
+							})
 						}
-						
-						
 					}
-					
 				})
+				
 			}
 			
 		},
@@ -181,7 +198,7 @@
 				const workbook = XLSX.utils.book_new();
 				for(let paramId of this.includeParamArr){
 					let needArr = this.normalValueArr.filter((item)=>{return item[1] == paramId})
-					let head = [$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)"]  //excel表头
+					let head = [this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)"]  //excel表头
 					if(paramId==4){
 						head.pop()
 					}else if(paramId == 9){
@@ -202,7 +219,7 @@
 						})
 					}
 					// console.log(this.paramArr[paramId],resultArr) //表名和数据
-					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr), this.$t(this.paramArr[paramId]));
+					XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultArr), this.$t(this.paramArr[paramId]).replace('/',''));
 				}
 				
 				if(this.manyParamValueArr.length){
@@ -368,35 +385,35 @@
 				let tempArr
 				let timer = setInterval(()=>{
 					
-					// switch(Math.round(3*Math.random())){
-					// 	case 0:  //一般数据
-					// 		tempArr = "[0,8,4,21,22,0,0,]"
-					// 		break
-					// 	case 1:  //ORP
-					// 		tempArr = "[0,4,16,32,0,0,0,]"
-					// 		break
-					// 	case 2:  //COD
-					// 		tempArr = "[0,9,3,32,54,43,1,]"
-					// 		break
-					// 	case 3:  //多参数
-					// 		tempArr = "[1,4,0,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
-					// }
-					// this.strToNumArr(tempArr)
-					
 					switch(Math.round(3*Math.random())){
 						case 0:  //一般数据
-							tempArr = "[0,8,21,22,]"
+							tempArr = "[0,8,4,21,22,0,0,]"
 							break
 						case 1:  //ORP
-							tempArr = "[0,4,32,]"
+							tempArr = "[0,4,16,32,0,0,0,]"
 							break
 						case 2:  //COD
 							tempArr = "[0,9,3,32,54,43,1,]"
 							break
 						case 3:  //多参数
-							tempArr = "[1,4,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
+							tempArr = "[1,4,0,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
 					}
 					this.strToNumArr(tempArr)
+					
+					// switch(Math.round(3*Math.random())){
+					// 	case 0:  //一般数据
+					// 		tempArr = "[0,8,21,22,]"
+					// 		break
+					// 	case 1:  //ORP
+					// 		tempArr = "[0,4,32,]"
+					// 		break
+					// 	case 2:  //COD
+					// 		tempArr = "[0,9,32,54,43,1,]"
+					// 		break
+					// 	case 3:  //多参数
+					// 		tempArr = "[1,4,23.4,6,6,37.5,-2,5.5,321,23,40.8,]"
+					// }
+					// this.strToNumArr(tempArr)
 					
 					// this.isNewDevice = true
 					// switch(Math.round(3*Math.random())){
@@ -412,8 +429,8 @@
 					// 	case 3:  //多参数
 					// 		tempArr = [1,4,0,23.4,Math.round(100*Math.random()),6,37.5,-2,5.5,321,23,40.8] 
 					// }
+					// this.handleArr(tempArr)
 					
-					this.handleArr(tempArr)
 				},50)
 				
 				setTimeout(()=>{
@@ -435,22 +452,7 @@
 					}
 				}
 			},
-			handleArr(arr){
-				if(this.isNewDevice!=null){
-					if(this.isNewDevice){
-						arr.splice(2,1) //移除地址。统一数据格式
-					}
-					if(arr[0]==0){
-						if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
-							this.includeParamArr.push(arr[1])
-						}
-						this.normalValueArr.push(arr)
-					}else if(arr[0]==1){
-						this.manyParamValueArr.push(arr)
-					}
-				}
 
-			},
 			strToNumArr(str){
 				let strArr = str.slice(1,str.length-2).split(',')
 				if(strArr.indexOf("")!=-1){ //存在空数据，代表垃圾数据
@@ -485,6 +487,23 @@
 					
 				}
 				
+			},
+			handleArr(arr){
+				// console.log('handleArr',arr)
+				if(this.isNewDevice!=null){
+					if(this.isNewDevice){
+						arr.splice(2,1) //移除地址。统一数据格式
+					}
+					if(arr[0]==0){
+						if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
+							this.includeParamArr.push(arr[1])
+						}
+						this.normalValueArr.push(arr)
+					}else if(arr[0]==1){
+						this.manyParamValueArr.push(arr)
+					}
+				}
+			
 			}
 			
 		}

@@ -13,7 +13,7 @@
 	"troubleshooting":"troubleshooting",
 	"Download content":"Download content",
 	
-	"时间校准":"Time calibration",
+	"时间修改":"Time adjustment",
 	"请输入间隔时间":"enter the interval",
 	"请输入测试时间":"enter the test time",
 	"取消":"cancel",
@@ -28,6 +28,8 @@
 	"浊度(COD)":"ZS(COD)",
 	"电导率/盐度":"DDM/DDM-S",
 	"电导率":"DDM",
+	"是否重新加载数据":"whether to reload data",
+	"暂无数据":"no data",
 	
 	"正在获取数据":"data loading",
 	"数据获取失败":"Data loading failure",
@@ -103,7 +105,7 @@
 	"序号":"sequence",
 	"历史数据":"historical data",
 	"是否清除历史记录":"whether to clear history records",
-	
+	"获取历史数据会停止接收实时数据，是否继续":"get historical data will stop receiving real-time data. Whether to continue",
 	"正在获取设备":"loading device",
 	"设备地址":"address",
 	"温度校准":"temperature",

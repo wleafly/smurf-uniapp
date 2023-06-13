@@ -1,21 +1,21 @@
 <template>
 	<view style="margin: 20rpx;">
 		<view style="display: flex;align-items: center;">
-			<view style="width: 25%;color: gray;">{{$t('日期筛选')}}</view>
+			<view class="attribute" >{{$t('日期筛选')}}</view>
 			<picker style="background-color: #eee;padding: 10rpx 20rpx;border-radius: 10rpx;" @change="bindDateChange" :range="dateArr">
 				<view style="display: flex;">{{selectedDate?selectedDate:$t("请选择日期")}}<u-icon name="arrow-down"></u-icon></view>
 			</picker>
 		</view>
 		
 		<view style="display: flex;align-items: center;margin: 20rpx 0;">
-			<view style="width: 25%;color: gray;">{{$t('时间段筛选')}}</view>
+			<view class="attribute" >{{$t('时间段筛选')}}</view>
 			<picker style="background-color: #eee;padding: 10rpx 20rpx;border-radius: 10rpx;" @change="bindTimeChange" :range="timeArr">
 				<view style="display: flex;">{{selectedTime?selectedTime:$t("请选择时间段")}}<u-icon name="arrow-down"></u-icon></view>
 			</picker>
 		</view>
 		
 		<view style="display: flex;align-items: center;">
-			<view style="color: gray;width: 25%;">{{$t('传感器类型')}}</view>
+			<view class="attribute" >{{$t('传感器类型')}}</view>
 			<view style="display: flex;flex-wrap: wrap;width: 75%;">
 				<view v-for="sensor,index in sensorArr" style="width: 30%;padding: 5rpx;min-height: 50rpx;margin-bottom: 5rpx;" @click="selectSensor(index)">
 					<view :style="index==selectedSensorIndex?'background-color: #eee':''" class="param_option">{{$t(paramArr[sensor])}}</view>
@@ -23,7 +23,7 @@
 			</view>
 		</view>
 		
-		<scroll-view scroll-y style="max-height: 900rpx;">
+		<scroll-view scroll-y style="max-height: 850rpx;">
 			
 			<uni-table v-if="tableData && tableData.length && tableData[0].param" :border="true"  style="margin-top: 20rpx;">	
 				<!-- 单参数表头 -->
@@ -37,7 +37,7 @@
 				</uni-tr>
 				
 				<uni-tr v-for="item,index in tableData">
-					<uni-td>{{index+1}}</uni-td>
+					<uni-td>{{(pageNum-1)*200+index+1}}</uni-td>
 					<uni-td>{{item.value}}</uni-td>
 					<uni-td v-if="tableData[0].param!=4">{{item.temperature}}</uni-td>
 					<uni-td v-if="tableData[0].param==9">{{item.mud}}</uni-td>
@@ -46,7 +46,7 @@
 				</uni-tr>
 			</uni-table>
 			
-			<uni-table v-else-if="tableData && tableData.length">
+			<uni-table v-else-if="tableData && tableData.length" :border="true">
 				
 				<uni-tr v-if="!manyParamsActive">
 					<uni-th>{{$t('序号')}}</uni-th>
@@ -64,7 +64,7 @@
 				
 				
 				<uni-tr v-for="item,index in tableData">
-					<uni-td>{{index+1}}</uni-td>
+					<uni-td>{{(pageNum-1)*200+index+1}}</uni-td>
 					<uni-td>{{item.temperature}}</uni-td>
 					<uni-td v-for="value in item.values">{{value}}</uni-td>
 					<uni-td>{{item.createTime?item.createTime.split(" ")[1]:''}}</uni-td>
@@ -72,10 +72,18 @@
 			</uni-table>
 
 		</scroll-view>
-
+		<view v-if="tableData.length" style="display: flex;justify-content: space-between;color: gray;margin: 10rpx;">
+			<view @click="lastPage">上一页</view>
+			<view style="display: flex;" @click="inputPageNum">
+				<text style="color: #2979FF;">{{pageNum}}</text>/{{totalPages}}
+				
+			</view>
+			<view @click="nextPage">下一页</view>
+		</view>
 		<button class="btn" style="background-color: #63ff63;" @click="downloadExcel">{{$t('生成Excel表格')}}</button>
-		<button class="btn" style="background-color: #ffcb63;" @click="deleteOneDay">{{$t('删除该日数据')}}</button>
-		<button class="btn" style="background-color: #FF6363;" @click="clearAll">{{$t('清除全部数据')}}</button>
+		<button class="btn" style="background-color: #ffcd69;" @click="deleteOneDay">{{$t('删除该日数据')}}</button>
+		<button class="btn" style="background-color: #ff6363;" @click="clearAll">{{$t('清除全部数据')}}</button>
+		<!-- <button class="btn" style="background-color: #5500ff;" @click="manyTest">使用测试数据</button> -->
 		
 	</view>
 </template>
@@ -86,6 +94,9 @@
 	export default {
 		data() {
 			return {
+				pageNum:1,//默认页数
+				totalPages:1,//总页数
+				// currentPage:1,//触发焦点时，记录当前的页数
 				dateArr:[], //从缓存获取
 				selectedDate:null,
 				timeArr:[],
@@ -97,19 +108,122 @@
 				paramArr:[],
 				unitArr:[],
 				selectedSensorIndex:0,
-				tableData:[],
+				tableData:[],//下载的
+				pageTableData:[],//页面显示的，最多200条
 				manyParamsDefault:getApp().globalData.originalManyParamsConfig,
 				unitMap:getApp().globalData.paramUnitMap,
 				manyParamsActive:null
-
+				
+				
 			}
 		},
 		methods: {
+			sliceTableData(){ //每页截200条数据
+				this.tableData = this.sensorValuesArr[this.sensorArr[this.selectedSensorIndex]].slice((this.pageNum-1)*200,this.pageNum*200)
+			},
+			inputPageNum(){
+				let that = this
+				uni.showModal({
+					title:'输入跳转的页数',
+					editable:true,
+					success(res) {
+						if(res.confirm){
+							let num = parseInt(res.content)
+							if(num!=NaN && num>0 && num<=that.totalPages && num!=that.pageNum){
+								that.pageNum = num
+								that.sliceTableData()
+							}
+						}
+					}
+				})
+			},
+			lastPage(){
+				if(this.pageNum>1){
+					this.pageNum--
+					this.sliceTableData()
+				}
+				
+			},
+			nextPage(){
+				if(this.pageNum<this.totalPages){
+					this.pageNum++
+				}
+				this.sliceTableData()
+			},
+			manyTest(){
+				for(let i=0;i<500; i++){
+					this.wholeDayArr.push({
+						"param": 4,
+						"value": Math.round(Math.random()*100),
+						"electric": 4.228,
+						"createTime": "2023-05-23 13:59:10"
+					})
+					this.wholeDayArr.push({
+						"param": 6,
+						"value": Math.round(Math.random()*100),
+						"temperature": 26.9,
+						"electric": 4.228,
+						"createTime": "2023-05-23 13:59:20"
+					})
+						
+					this.wholeDayArr.push({
+						"param": 9,
+						"value": Math.round(Math.random()*100),
+						"temperature": 26.9,
+						"electric": 4.228,
+						"mud": 0,
+						"bod": 0,
+						"createTime": "2023-05-23 13:59:25"
+					})
+		
+					this.wholeDayArr.push({
+						"temperature": 2.7,
+						"values": [
+							i,
+							0,
+							Math.round(Math.random()*100),
+							Math.round(Math.random()*100),
+							0,
+							Math.round(Math.random()*100),
+							0,
+							Math.round(Math.random()*100)
+						],
+						"electric": 4.273,
+						"createTime": "2023-05-23 16:51:28"
+					})
+						
+					this.wholeDayArr.push({
+						"temperature": 2.7,
+						"values": [
+							0,
+							0,
+							Math.round(Math.random()*100),
+							Math.round(Math.random()*100),
+							0,
+							Math.round(Math.random()*100),
+							0,
+							Math.round(Math.random()*100)
+						],
+						"electric": 4.273,
+						"createTime": "2023-05-23 16:51:28"
+					})
+						
+				}
+
+				// this.wholeDayArr=[...this.wholeDayArr,...this.wholeDayArr,...this.wholeDayArr,...this.wholeDayArr]
+				
+				this.bindTimeChange({
+					detail:{
+						value:0
+					}
+				})
+				
+			},
 			deleteOneDay(){
 				let that = this
 				if(this.selectedDate){
 					uni.showModal({
-						content:`${$t('是否要删除')}${this.selectedDate}${$t('的实时数据')}`,
+						content:`${that.$t('是否要删除')}${this.selectedDate}${that.$t('的实时数据')}`,
 						success(res) {
 							if(res.confirm){
 								console.log("删除一天的数据")
@@ -143,7 +257,8 @@
 			downloadExcel(){
 				const workbook = XLSX.utils.book_new();
 				let paramType = ""
-				let tableData = this.tableData
+				// let tableData = this.tableData
+				let tableData = this.sensorValuesArr[this.sensorArr[this.selectedSensorIndex]]
 				if(tableData.length){
 					let paramId = tableData[0].param
 					if(paramId){ //单参数
@@ -174,12 +289,12 @@
 						let manyParamsHeadWithUnit = []
 						if(this.manyParamsActive){
 							for(let i of this.manyParamsActive){
-								manyParamsHeadWithUnit.push(this.$(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
 							} 
 		
 						}else{
 							for(let i of this.manyParamsDefault){
-								manyParamsHeadWithUnit.push(this.$(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
 							} 
 						}
 						excelData = [[this.$t("序号"),this.$t("温度")+"(℃)",...manyParamsHeadWithUnit,this.$t("时间")]]
@@ -215,13 +330,16 @@
 			},
 			selectSensor(index){
 				this.selectedSensorIndex = index
-				this.tableData = this.sensorValuesArr[this.sensorArr[index]]
+				let sensorData = this.sensorValuesArr[this.sensorArr[index]]
+				this.pageNum = 1
+				this.totalPages = Math.ceil(sensorData.length/200) //计算页数
+				this.tableData = sensorData.slice(0,200)
 				// console.log(this.tableData)
 			},
 			bindDateChange(e){
 				this.selectedDate = this.dateArr[e.detail.value]
 				this.wholeDayArr = uni.getStorageSync(this.selectedDate)
-				console.log('wholeDayArr',this.wholeDayArr)
+				// console.log('wholeDayArr',this.wholeDayArr)
 				if(this.wholeDayArr){
 					let nodeArr = []
 					this.timeArr = [this.$t('全天')]
@@ -284,13 +402,37 @@
 				}
 				this.sensorArr = Array.from(sensorSet)
 				// console.log(this.sensorValuesArr)
-				this.tableData = this.sensorValuesArr[this.sensorArr[0]]
-				console.log(this.tableData)
+				let firstSensorData = this.sensorValuesArr[this.sensorArr[0]]
+				this.pageNum = 1
+				this.totalPages = Math.ceil(firstSensorData.length/200) //计算页数
+				this.tableData = firstSensorData.slice(0,200)
+				// console.log(this.tableData)
 			}
 				
 				
 		},
 		onLoad() {
+			let that = this
+			 /*#ifdef MP*/
+			uni.getStorageInfo({
+				success: function (res) {
+					console.log('最大容量', res.limitSize);
+					console.log('当前存储', res.currentSize);
+					if(res.currentSize/res.limitSize>0.9){
+						uni.showModal({
+							content:"空间不足，是否清除缓存",
+							success(res) {
+								if(res.confirm){
+									that.clearAll()
+								}
+							}
+						})
+					}
+				}
+			});
+			/*#endif*/
+
+			
 			let manyParamsConfig = uni.getStorageSync("manyParamsConfig")
 			if(manyParamsConfig){
 				if(manyParamsConfig[0]=='COD'){
@@ -304,7 +446,7 @@
 			// console.log(this.manyParamsActive)
 		},
 		onShow(){
-			console.log(this.unitMap)
+			// console.log(this.unitMap)
 			// console.log(this.unitMap.get("CD"))
 			// console.log(uni.getStorageSync('2023-05-23'))
 			
@@ -336,5 +478,9 @@
 	.btn{
 		color: white;font-weight: bold;margin-top: 20rpx;
 
+	}
+	.attribute{
+		width: 25%;
+		/* color: gray; */
 	}
 </style>

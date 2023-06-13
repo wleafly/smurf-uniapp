@@ -3,20 +3,14 @@
 		"^u-(.*)": "@/uni_modules/uview-ui/components/u-$1/u-$1.vue"
 	},
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
-		// {
-		//     "path" : "pages/test/test",
-		//     "style" :                                                                                    
-		//     {
-		//         "navigationBarTitleText": "",
-		//         "enablePullDownRefresh": false
-		//     }
-		    
-		// },
+
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "%Real-time data%"
+				"navigationBarTitleText": "%Real-time data%",
+				"enablePullDownRefresh": true
 			}
+			
 		},
 		{
 			"path": "pages/wifi/wifi",
@@ -76,7 +70,16 @@
                 "enablePullDownRefresh": false
             }
             
-        }
+        },
+		{
+		    "path" : "pages/test/test",
+		    "style" :                                                                                    
+		    {
+		        "navigationBarTitleText": "",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		}
         
     ],
 
@@ -85,6 +88,8 @@
 		"navigationBarTitleText": "uni-app",
 		"backgroundColor": "#F8F8F8",
 		"navigationBarBackgroundColor": "#89b7ec"
+		
+		
 	},
 	"tabBar": {
 		// "custom": true,
