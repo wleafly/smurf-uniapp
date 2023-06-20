@@ -192,32 +192,23 @@
 					//地址不同时才能push新设备，同时防止重复元素
 					if(getApp().globalData.deviceArr.findIndex((item)=>{return item.address==device.address})==-1){
 						getApp().globalData.deviceArr.push(device)
-						//在数组中添加地址和参数id的映射关系
-						getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2])
-						getApp().globalData.oldParamId = parseInt(resultArr[2]) //存下当前的参数类型，若是老设备，接收的值不带地址，可以利用这个变量
+						getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2]) //在数组中添加地址和参数id的映射关系
+						getApp().globalData.oldParamId = parseInt(resultArr[2]) //存下最后一个参数类型，若是老设备，接收的值不带地址，可以利用这个变量
 					}else{
 						getApp().globalData.homeConfig.waitFirstValue = true //重新f900时，如果设备重复，显示名称右边的加载动画
 					}
-				
-					// let deviceStr = JSON.stringify(device)
-					// for(var i =0;i< getApp().globalData.deviceArr.length;i++){
-					// 	if(deviceStr != JSON.stringify(item)){
-					// 		i++
-					// 	}
-					// }
-					// if(i==getApp().globalData.deviceArr.length){  //只添加不重复的device
-						
-					// }
-					
-
 				}else if(result.charAt(result.length-1)!='}'){ //数据过长，对数据进行拼接
-					getApp().globalData.tempStr = result //前半截数据
+					if(result.startsWith('{')){
+						getApp().globalData.tempStr = result //前半截数据
+					}else{
+						getApp().globalData.tempStr += result //中间半截数据
+					}
 				}else if(result.charAt(0)!='{' && result.search("}")!=-1){ //第一位不是'{',且含有'}',说明是长数据的后半截
 					if(result.endsWith("}[OK]") || result.endsWith("}[Error]")){ //f900后发fc等指令可能会出现的情况
 						console.log("接收到了后半截数据带[OK]或[Error]的情况")
 						result = result.split("[")[0]
 					}
-
+					
 					getApp().globalData.tempStr = getApp().globalData.tempStr + result
 					getApp().globalData.tempStr = getApp().globalData.tempStr.slice(1,getApp().globalData.tempStr.length-2).split(',') //silce是左闭右开，length-2可以移除掉最后面的,}
 			
@@ -263,6 +254,7 @@
 							getApp().globalData.isNewDevice = false
 						}
 					}
+					
 					if(getApp().globalData.isNewDevice){
 						console.log('此型号是新设备')
 					}else{

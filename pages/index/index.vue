@@ -47,11 +47,11 @@
 			<view v-if="deviceArr[0].type!=1">
 				<view v-for="device,index in deviceArr" class="chart_view shadow" :key="index">
 					<view class="flex_row_between" style="padding: 0rpx 40rpx;height: 100rpx;align-items: center;">
-						<view class="flex_row_between" style="width: 80%;font-size: 35rpx;" >
-							<view :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''" @click="switchChart(index,0)" >{{$t(paramArr[device.param])}}</view>
-							<view>
+						<view class="flex_row_between" style="width: 80%;font-size: 35rpx;" :style="lightOptions[index]==0?'color: #2D9AFF;font-weight: bold':''">
+							<view  @click="switchChart(index,0)" >{{$t(paramArr[device.param])}}</view>
+							<view @click="switchChart(index,0)">
 							<!-- #ifdef APP-PLUS -->
-							{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().value:''}}
+							{{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().value:''}}
 							<!-- #endif -->
 							<!-- #ifndef APP-PLUS -->
 							{{valueArr.findLastIndex((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)})!=-1?
@@ -66,12 +66,12 @@
 					
 					<view v-if="chartDisplay[index]">
 						<view class="flex_row_between" style="padding: 20rpx 30rpx;border-top: 1px solid lightgray;">
-							<view class="flex_row_between" style="width: 80%;">
+							<view class="flex_row_between son_param_row">
 								<view style="color: gray;"><text >{{$t('地址')}}：</text>{{device.address}}</view>
-								<view v-if="device.param!=4"  @click="switchChart(index,1)" :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''"><text >{{$t('温度')}}：</text>
+								<view v-if="device.param!=4"  @click="switchChart(index,1)" class="right_son_param" :style="lightOptions[index]==1?'color: #2D9AFF;font-weight: bold':''"><text >{{$t('温度')}}：</text>
 
 								<!-- #ifdef APP-PLUS -->
-								{{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().temperature:''}}
+								{{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().temperature:''}}
 								<!-- #endif -->
 								<!-- #ifndef APP-PLUS -->
 								{{valueArr.findLastIndex((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)})!=-1?
@@ -82,10 +82,10 @@
 						</view>
 						
 						<view v-if="device.param==9" class="flex_row_between" style="padding: 0rpx 30rpx;margin-bottom: 20rpx;">
-							<view class="flex_row_between" style="width: 80%;">
+							<view class="flex_row_between son_param_row">
 								<view @click="switchChart(index,2)" :style="lightOptions[index]==2?'color: #2D9AFF;font-weight: bold':''"><text >{{$t('浊度')}}：</text>
 								 <!-- #ifdef APP-PLUS -->
-								 {{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().mud:''}}
+								 {{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().mud:''}}
 								 <!-- #endif -->
 								 <!-- #ifndef APP-PLUS -->
 								{{valueArr.findLastIndex((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)})!=-1?
@@ -93,11 +93,11 @@
 								 <!-- #endif -->
 
 								 <text class="unit">NTU</text></view>
-								<view @click="switchChart(index,3)" :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''"><text >BOD：</text>
+								<view @click="switchChart(index,3)" class="right_son_param" :style="lightOptions[index]==3?'color: #2D9AFF;font-weight: bold':''"><text >BOD：</text>
 
 								 
 								 <!-- #ifdef APP-PLUS -->
-								  {{valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().bod:''}}
+								  {{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().bod:''}}
 								  <!-- #endif -->
 								  <!-- #ifndef APP-PLUS -->
 								{{valueArr.findLastIndex((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)})!=-1?
@@ -161,6 +161,7 @@
 </template>
 
 <script>
+import test from '../../uni_modules/uview-ui/libs/function/test';
 	export default {
 		data() {
 			return{
@@ -240,7 +241,7 @@
 		},
 
 		onShow() {
-
+			// this.test()
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
 			// console.log(this.manyParamsConfig)
 			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
@@ -460,23 +461,27 @@
 			test(){ 
 				
 				getApp().globalData.deviceArr.push({address:3,type:0,param:9})
-				getApp().globalData.deviceArr.push({address:6,type:0,param:3})
-				getApp().globalData.deviceArr.push({address:16,type:0,param:4})
+				setTimeout(()=>{
+					getApp().globalData.deviceArr.push({address:6,type:0,param:3})
+				},250)
+				setTimeout(()=>{
+					getApp().globalData.deviceArr.push({address:16,type:0,param:4})
+				},500)
 				
 				// getApp().globalData.deviceArr.push({address:3,type:1,param:4})
 				
 				setTimeout(()=>{
 					
-					getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:3.764,testTime:3,interval:2})
+					getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:4.164,testTime:3,interval:2})
 					setInterval(()=>{
 						getApp().globalData.valueArr.push(
 							{param:9,address:3,value:Math.round(Math.random()*50),temperature:23.4,mud:3.4,bod:3.3,electric:3.764},
 							// {temperature:23.5,values:[Math.round(100*Math.random()),Math.round(100*Math.random()),24.3,12.3,3.1,2,3,32],electric:3.764}
 						)
 						setTimeout(()=>{
-							getApp().globalData.valueArr.push({param:3,address:6,value:9+Math.round(Math.random()*5),temperature:23.4,electric:3.764})
+							getApp().globalData.valueArr.push({param:3,address:6,value:9+Math.round(Math.random()*5),temperature:23.4,electric:3.264})
 							setTimeout(()=>{
-								getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:3.764})
+								getApp().globalData.valueArr.push({param:4,address:16,value:20+Math.round(Math.random()*5),electric:3.064})
 							},1000)
 						},1000)
 					},3000)
@@ -503,7 +508,7 @@
 							opts.yAxis.data[0].title = '℃'
 							param_name = ''
 						}else{ //一般情况
-							// itemArr = this.valueArr.filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
+							// itemArr = this.valueArr.slice(-10).filter((item)=>{return item.param==this.deviceArr[index].param}) //获取某一传感器的值数据，作为图表的数据来源
 							// for(var it of itemArr){
 							// 	categories.push(i)
 							// 	series_data.push(it.value)//单参数默认显示主参数值
@@ -511,7 +516,7 @@
 							// }
 							param_name = this.paramArr[this.deviceArr[index].param]
 						}
-						
+					
 						this.chartDataArr[index]={
 							categories: categories,
 							series: [
@@ -531,25 +536,28 @@
 			setElectric(){
 				if(this.valueArr.length>0){
 					let electric = this.valueArr[this.valueArr.length-1].electric
-					let percent = Math.round(50 * electric - 110) //此公式下，electric低至2.2代表电量为0,4.2以上代表满电量
-					if(percent > 100){
-						this.eq = 100
-						this.batteryColor = 'greenyellow'
-					}else if(percent <0){
-						this.eq = 0
-						this.batteryColor = 'orangered'
-					}else{ //计算结果在0~100间，直接赋值
-						this.eq = percent
-						if(percent>80){
-							this.batteryColor = 'greenyellow'
-						}else if(percent>50){
-							this.batteryColor = 'yellow'
-						}else if(percent>20){
-							this.batteryColor = 'orange'
-						}else{ //0~20
-							this.batteryColor = 'orangered'
-						}
+					let percent
+					if(electric>4.2){
+						percent = 100
+					}else if(electric>3.4){ //3.4~4.2,对应电量5~100
+						percent = Math.round(118.75*electric-398.75) 
+					}else if(electric>2.9){ //2.9~3.4，对应电量0~5
+						percent = Math.round(10*electric-29)
+					}else{
+						percent = 0
 					}
+
+					this.eq = percent
+					if(percent>80){
+						this.batteryColor = 'greenyellow'
+					}else if(percent>50){
+						this.batteryColor = 'yellow'
+					}else if(percent>20){
+						this.batteryColor = 'orange'
+					}else{ //0~20
+						this.batteryColor = 'orangered'
+					}
+					
 
 				}
 			},
@@ -576,7 +584,7 @@
 			},
 			switchChart(index,type){
 				this.$set(this.lightOptions,index,type)
-				// let itemArr = this.valueArr.filter((item)=>{return (item.param == this.deviceArr[index].param) && (item.address?(item.address==this.deviceArr[index].address):true)})  //取到索引对应传感器的值的数组
+				// let itemArr = this.valueArr.slice(-10).filter((item)=>{return (item.param == this.deviceArr[index].param) && (item.address?(item.address==this.deviceArr[index].address):true)})  //取到索引对应传感器的值的数组
 				let itemArr = this.valueArr.slice(-this.limit*10).filter((item)=>{return (item.param == this.deviceArr[index].param) && (item.address?(item.address==this.deviceArr[index].address):true)})  //减小筛选范围
 				itemArr = itemArr.slice(-this.limit) //取数组后面的limit位
 				let tempArr = []
@@ -632,7 +640,8 @@
 				let max = Math.max.apply(null,newData)
 				let chart_max
 				if(average*2>max){
-					chart_max = Math.ceil(average*2)+(5-Math.ceil(average*2)%5)
+					// chart_max = Math.ceil(average*2)+(5-Math.ceil(average*2)%5)
+					chart_max = Math.ceil(average*2)+((5-Math.ceil(average*2)%5)==5?0:(5-Math.ceil(average*2)%5))
 				}else{
 					chart_max = max+(5-max%5)
 				}
@@ -671,6 +680,7 @@
 					this.setElectric()
 				}
 				if(this.valueArr.length){ //接单参数的情况
+
 					if(this.deviceArr[0] && this.deviceArr[0].type == 1){ //接多参数的情况,多参数的情况下设备列表只能有一支
 						//给多参数折线图chartdata赋值的逻辑写在这里
 						let newValue = this.valueArr[this.valueArr.length-1]
@@ -777,6 +787,14 @@
 		min-height: 500rpx;
 	}
 	
+	.son_param_row{
+		 // width: 80%;
+		 width: 100%;
+		 .right_son_param{
+		 	width: 240rpx;
+		 }
+	}
+	
 	.flex_row_between{
 		display: flex;
 		flex-direction: row;
@@ -804,6 +822,7 @@
 		padding: 15rpx;
 		width: 85%;
 	}
+
 	
 	.alter_time_view {
 		background-color: white;

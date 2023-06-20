@@ -28,12 +28,14 @@
 			<uni-table v-if="tableData && tableData.length && tableData[0].param" :border="true"  style="margin-top: 20rpx;">	
 				<!-- 单参数表头 -->
 				<uni-tr>
-					<uni-th>{{$t('序号')}}</uni-th>
-					<uni-th>{{$t(paramArr[tableData[0].param])+"("+unitArr[tableData[0].param]+")"}}</uni-th>
-					<uni-th v-if="tableData[0].param!=4">{{$t('温度')}}(℃)</uni-th>
-					<uni-th v-if="tableData[0].param==9">{{$t('浊度')}}(NTU)</uni-th>
-					<uni-th v-if="tableData[0].param==9">BOD(mg/L)</uni-th>
-					<uni-th>{{$t("时间")}}</uni-th>
+					<uni-th width="1rpx">{{$t('序号')}}</uni-th>
+					<uni-th width="1rpx" >{{$t(paramArr[tableData[0].param])+"("+unitArr[tableData[0].param]+")"}}</uni-th>
+					<uni-th width="1rpx" v-if="tableData[0].param!=4">{{$t('温度')}}(℃)</uni-th>
+					<uni-th width="1rpx" v-if="tableData[0].param==9">{{$t('浊度')}}(NTU)</uni-th>
+					<uni-th width="1rpx" v-if="tableData[0].param==9">BOD(mg/L)</uni-th>
+					<uni-th width="1rpx">{{$t("时间")}}</uni-th>
+					
+					<!-- <uni-th>电量</uni-th> -->
 				</uni-tr>
 				
 				<uni-tr v-for="item,index in tableData">
@@ -43,23 +45,25 @@
 					<uni-td v-if="tableData[0].param==9">{{item.mud}}</uni-td>
 					<uni-td v-if="tableData[0].param==9">{{item.bod}}</uni-td>
 					<uni-td>{{item.createTime?item.createTime.split(" ")[1]:''}}</uni-td>
+					
+					<!-- <uni-td>{{item.electric}}</uni-td> -->
 				</uni-tr>
 			</uni-table>
 			
 			<uni-table v-else-if="tableData && tableData.length" :border="true">
 				
 				<uni-tr v-if="!manyParamsActive">
-					<uni-th>{{$t('序号')}}</uni-th>
-					<uni-th>{{$t('温度')}}(℃)</uni-th>
-					<uni-th v-for="param in manyParamsDefault">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
-					<uni-th>{{$t("时间")}}</uni-th>
+					<uni-th width="1rpx">{{$t('序号')}}</uni-th>
+					<uni-th width="1rpx">{{$t('温度')}}(℃)</uni-th>
+					<uni-th width="1rpx" v-for="param in manyParamsDefault">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
+					<uni-th width="1rpx">{{$t("时间")}}</uni-th>
 				</uni-tr>
 				
 				<uni-tr v-else>
-					<uni-th>{{$t('序号')}}</uni-th>
-					<uni-th>{{$t('温度')}}(℃)</uni-th>
-					<uni-th v-for="param in manyParamsActive">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
-					<uni-th>{{$t("时间")}}</uni-th>
+					<uni-th width="1rpx">{{$t('序号')}}</uni-th>
+					<uni-th width="1rpx">{{$t('温度')}}(℃)</uni-th>
+					<uni-th width="1rpx" v-for="param in manyParamsActive">{{$t(param)+(unitMap.get(param)?`(${unitMap.get(param)})`:'')}}</uni-th>
+					<uni-th width="1rpx">{{$t("时间")}}</uni-th>
 				</uni-tr>
 				
 				
@@ -155,7 +159,7 @@
 					this.wholeDayArr.push({
 						"param": 4,
 						"value": Math.round(Math.random()*100),
-						"electric": 4.228,
+						"electric": 4.218,
 						"createTime": "2023-05-23 13:59:10"
 					})
 					this.wholeDayArr.push({
@@ -251,68 +255,127 @@
 					})
 				
 				}
-				
-				
 			},
 			downloadExcel(){
-				const workbook = XLSX.utils.book_new();
-				let paramType = ""
-				// let tableData = this.tableData
-				let tableData = this.sensorValuesArr[this.sensorArr[this.selectedSensorIndex]]
-				if(tableData.length){
-					let paramId = tableData[0].param
-					if(paramId){ //单参数
+				 /*#ifdef APP-PLUS*/
+					let tableData = this.sensorValuesArr[this.sensorArr[this.selectedSensorIndex]]
+					if(tableData.length){
+						let paramId = tableData[0].param
 						let excelData
-						
-						if(paramId==4){
-							excelData = [[this.$t("序号"),"ORP(mV)",this.$t("时间")]]
-						}else if(paramId==9){
-							excelData = [[this.$t("序号"),"COD(mg/L)",this.$t("温度")+"(℃)",this.$t("浊度")+"(NTU)","BOD(mg/L)",this.$t("时间")]]
-						}else{
-							excelData = [[this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)",this.$t("时间")]] 
-						}
-					
-						for(let item of tableData){
-							if(item.param==4){
-								excelData.push([excelData.length,item.value,item.createTime])
-							}else if(item.param==9){
-								excelData.push([excelData.length,item.value,item.temperature,item.mud,item.bod,item.createTime])
+						let paramType
+						if(paramId){ //单参数
+							
+							
+							if(paramId==4){
+								excelData = [[this.$t("序号"),"ORP(mV)",this.$t("时间")]]
+							}else if(paramId==9){
+								excelData = [[this.$t("序号"),"COD(mg/L)",this.$t("温度")+"(℃)",this.$t("浊度")+"(NTU)","BOD(mg/L)",this.$t("时间")]]
 							}else{
-								excelData.push([excelData.length,item.value,item.temperature,item.createTime])
+								excelData = [[this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)",this.$t("时间")]] 
 							}
+						
+							for(let item of tableData){
+								if(item.param==4){
+									excelData.push([excelData.length,item.value,item.createTime])
+								}else if(item.param==9){
+									excelData.push([excelData.length,item.value,item.temperature,item.mud,item.bod,item.createTime])
+								}else{
+									excelData.push([excelData.length,item.value,item.temperature,item.createTime])
+								}
+							}
+							// console.log(excelData)
+							paramType = this.paramArr[paramId].replace("/"," ") //表名和文件名不能带/
+							
+							// XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), paramType);
+						}else{ //多参数
+							
+							let manyParamsHeadWithUnit = []
+							if(this.manyParamsActive){
+								for(let i of this.manyParamsActive){
+									manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								} 
+			
+							}else{
+								for(let i of this.manyParamsDefault){
+									manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								} 
+							}
+							excelData = [[this.$t("序号"),this.$t("温度")+"(℃)",...manyParamsHeadWithUnit,this.$t("时间")]]
+							for(let item of tableData){
+								excelData.push([excelData.length,item.temperature,...item.values,item.createTime])
+							}
+							// console.log(excelData)
+							paramType = this.$t("多参数")
+							// XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), this.$t("多参数"));
 						}
-						// console.log(excelData)
-						paramType = this.paramArr[paramId].replace("/"," ") //表名和文件名不能带/
-						XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), paramType);
-					}else{ //多参数
-						let excelData
-						let manyParamsHeadWithUnit = []
-						if(this.manyParamsActive){
-							for(let i of this.manyParamsActive){
-								manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
-							} 
+						let fileName = `${paramType+this.$t('实时数据')}${this.selectedDate+" "+this.selectedTime}`
+						this.createExcelInApp(excelData,paramType,fileName)
+					}
+				/*#endif*/
+
 		
-						}else{
-							for(let i of this.manyParamsDefault){
-								manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
-							} 
+				
+				/*#ifdef MP*/
+				const workbook = XLSX.utils.book_new();
+				// let tableData = this.tableData
+				for(let sensor of this.sensorArr){
+					console.log(this.sensorValuesArr[sensor]) 
+					let paramType = ""
+					let tableData = this.sensorValuesArr[sensor]
+					if(tableData.length){
+						let paramId = tableData[0].param
+						if(paramId){ //单参数
+							let excelData
+							
+							if(paramId==4){
+								excelData = [[this.$t("序号"),"ORP(mV)",this.$t("时间")]]
+							}else if(paramId==9){
+								excelData = [[this.$t("序号"),"COD(mg/L)",this.$t("温度")+"(℃)",this.$t("浊度")+"(NTU)","BOD(mg/L)",this.$t("时间")]]
+							}else{
+								excelData = [[this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)",this.$t("时间")]] 
+							}
+						
+							for(let item of tableData){
+								if(item.param==4){
+									excelData.push([excelData.length,item.value,item.createTime])
+								}else if(item.param==9){
+									excelData.push([excelData.length,item.value,item.temperature,item.mud,item.bod,item.createTime])
+								}else{
+									excelData.push([excelData.length,item.value,item.temperature,item.createTime])
+								}
+							}
+							// console.log(excelData)
+							paramType = this.paramArr[paramId].replace("/"," ") //表名和文件名不能带/
+							XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), paramType);
+						}else{ //多参数
+							let excelData
+							let manyParamsHeadWithUnit = []
+							if(this.manyParamsActive){
+								for(let i of this.manyParamsActive){
+									manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								} 
+							
+							}else{
+								for(let i of this.manyParamsDefault){
+									manyParamsHeadWithUnit.push(this.$t(i)+(this.unitMap.get(i)?`(${this.unitMap.get(i)})`:''))
+								} 
+							}
+							excelData = [[this.$t("序号"),this.$t("温度")+"(℃)",...manyParamsHeadWithUnit,this.$t("时间")]]
+							for(let item of tableData){
+								excelData.push([excelData.length,item.temperature,...item.values,item.createTime])
+							}
+							// console.log(excelData)
+							paramType = this.$t("多参数")
+							XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), this.$t("多参数"));
 						}
-						excelData = [[this.$t("序号"),this.$t("温度")+"(℃)",...manyParamsHeadWithUnit,this.$t("时间")]]
-						for(let item of tableData){
-							excelData.push([excelData.length,item.temperature,...item.values,item.createTime])
-						}
-						// console.log(excelData)
-						paramType = this.$t("多参数")
-						XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(excelData), this.$t("多参数"));
 					}
 				}
 				
-				/*#ifdef MP*/
 				const fileData = XLSX.write(workbook, {
 					bookType: "xlsx",
 					type: 'base64'
 				});
-				const filePath = `${wx.env.USER_DATA_PATH}/${paramType}${this.$t('实时数据')}${this.selectedDate+" "+this.selectedTime}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
+				const filePath = `${wx.env.USER_DATA_PATH}/${this.$t('实时数据')}${this.selectedDate+" "+this.selectedTime}.xlsx` // 文件名对应表名，多个表的情况可以自己测试
 				const fs = wx.getFileSystemManager()
 				fs.writeFile({
 					filePath: filePath,
@@ -328,6 +391,86 @@
 
 				/*#endif*/
 			},
+			createExcelInApp(excelData,paramType,fileName){ //app生成表格模板
+				  let worksheet = paramType
+				  let str = ''
+				  //循环遍历，每行加入tr标签，每个单元格加td标签
+				  for (let i = 0; i < excelData.length; i++) {
+					str += '<tr>'
+					for (let unitValue of excelData[i]) {
+					  //增加\t为了不让表格显示科学计数法或者其他格式
+					  str += `<td>${ unitValue + '\t'}</td>`
+					}
+					str += '</tr>'
+				  }
+				  //下载的表格模板数据
+				  let template = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+					xmlns:x="urn:schemas-microsoft-com:office:excel"
+					xmlns="http://www.w3.org/TR/REC-html40">
+					<head><!--[if gte mso 9]><xml encoding="UTF-8"><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+					<x:Name>${worksheet}</x:Name>
+					<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
+					</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+					</head><body><table>${str}</table></body></html>`
+				  //下载模板
+				  this.exportExcel(template, 'excel',fileName)
+			},
+			exportExcel (fileData, documentName = 'excel',fileName) { //app导出表格的方法
+			  /*
+			  PRIVATE_DOC: 应用私有文档目录常量
+			  PUBLIC_DOCUMENTS: 程序公用文档目录常量
+			  */
+			  plus.io.requestFileSystem(plus.io.PUBLIC_DOCUMENTS, function(fs) {
+			    let rootObj = fs.root
+			    let fullPath = rootObj.fullPath
+			    console.log("开始导出数据...")
+			    // 创建文件夹
+			    rootObj.getDirectory(documentName, {
+			      create: true
+			    }, function(dirEntry) {
+			      // 创建文件,防止重名
+			      // let fileName = new Date().getTime()
+			      console.log(fileName)
+			      dirEntry.getFile(`${fileName}.xlsx`, {
+			        create: true
+			      }, function(fileEntry) {
+			        fileEntry.createWriter(function(writer) {
+			          writer.onwritestart = (e) => {
+						uni.showLoading({
+							title:"正在导出..."
+						})
+			          }
+			          writer.onwrite = (e) => {
+						uni.hideLoading()
+			            setTimeout(() => {
+						  uni.showToast({
+						  	icon:'success',
+							title:'导出成功'
+						  })
+			              const path = `file://${fullPath}${documentName}/${fileName}.xlsx`
+			              console.log('文件位置：', path)
+			              // 打开文件
+			              uni.openDocument({
+			                filePath: path,
+			                success: res => {
+			                  console.log('打开文档成功', res)
+			                },
+			                fail: e => {
+			                  console.log('打开失败', e)
+			                }
+			              })
+			            },500)
+			          }
+			          // 写入内容
+			          writer.write(fileData)
+			        }, function(e) {
+			          console.log(e.message)
+			        })
+			      })
+			    })
+			  })
+			},
+					
 			selectSensor(index){
 				this.selectedSensorIndex = index
 				let sensorData = this.sensorValuesArr[this.sensorArr[index]]
@@ -339,11 +482,12 @@
 			bindDateChange(e){
 				this.selectedDate = this.dateArr[e.detail.value]
 				this.wholeDayArr = uni.getStorageSync(this.selectedDate)
-				// console.log('wholeDayArr',this.wholeDayArr)
+				
+				console.log('wholeDayArr',this.wholeDayArr)
 				if(this.wholeDayArr){
 					let nodeArr = []
 					this.timeArr = [this.$t('全天')]
-					
+					this.partArr = []
 					this.wholeDayArr.forEach((value,index)=>{
 						if(value.testTime){
 							nodeArr.push(index)
@@ -369,7 +513,7 @@
 				
 				
 				// console.log(this.partArr)
-				// console.log(this.timeArr)
+				console.log(this.timeArr)
 			},
 			bindTimeChange(e){
 				let index = e.detail.value
@@ -408,7 +552,6 @@
 				this.tableData = firstSensorData.slice(0,200)
 				// console.log(this.tableData)
 			}
-				
 				
 		},
 		onLoad() {
@@ -472,6 +615,7 @@
 </script>
 
 <style>
+
 	.param_option{
 		border: 1rpx solid lightgray;text-align: center;border-radius: 10rpx;height: 100%;display: flex;justify-content: center;align-items: center;
 	}

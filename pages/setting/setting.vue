@@ -1,5 +1,5 @@
 <template>
-	<view class="title">
+	<view class="title" style="height: 100%;display: flex;flex-direction: column;justify-content: space-between;">
 		<u-cell-group>
 			<u-cell :title="i18n('deviceName')" size="large" isLink :clickable="true" url="/pages/setting/deviceName"
 				icon="/static/device_name.png"></u-cell>
@@ -16,7 +16,9 @@
 			<u-cell :title="i18n('cache')" size="large" isLink :clickable="true" url="/pages/setting/download"
 				icon="/static/download.png"></u-cell> 
 		</u-cell-group>
-
+		<!-- #ifdef APP-PLUS -->
+		    <view style="color: darkgray;text-align: center;margin-bottom: 10rpx;">Version 3.1.1</view>
+		<!-- #endif -->
 
 	</view>
 </template>
@@ -41,6 +43,9 @@
 </script>
 
 <style>
+	page{
+		height: 100%;
+	}
 	.cell {
 		border-radius: 10rpx;
 		margin-left: 20rpx;

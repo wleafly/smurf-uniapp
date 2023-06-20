@@ -49,6 +49,7 @@
 <script>
 	import * as XLSX from '../../static/excel.js';
 	import getDateTime from '@/common/getdateTime.js';
+	import download from '@/pages/setting/download.vue'
 	export default {
 		data() {
 			return{
@@ -194,6 +195,58 @@
 				this.addData()
 			},
 			downloadData(){
+				 /*#ifdef APP-PLUS*/
+				let paramId = this.selectOption
+				let needArr = this.normalValueArr.filter((item)=>{return item[1] == paramId})
+				let resultArr = []
+				if(paramId!=0){
+					let head = [this.$t("序号"),`${this.$t(this.paramArr[paramId])}(${this.unitArr[paramId]})`,this.$t("温度")+"(℃)"]  //excel表头
+					if(paramId==4){
+						head.pop()
+					}else if(paramId == 9){
+						head = [...head,...[this.$t("浊度")+"(NTU)","BOD(mg/L)"]]
+					}
+					resultArr = [head]
+					if(paramId == 4){
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2]])
+						})
+					}else if(paramId == 9){
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2],value[3],value[4],value[5]])
+						})
+					}else{
+						needArr.forEach((value,index)=>{
+							resultArr.push([index+1,value[2],value[3]])
+						})
+					}
+				}else{ //导出多参数
+					let head = []
+					if(this.manyParamsConfig){
+						head = [this.$t("温度")+'(℃)', 'COD(mg/L)', this.$t('COD内置浊度')+'(mg/L)']
+						this.manyParamsConfig.forEach((item,index)=>{
+							if(index>0){
+								head[index+2] = `${this.$t(item)}(${getApp().globalData.manyParamCustomUnits[getApp().globalData.manyParamCustomOptions.findIndex((option)=>{return option == item})]})`
+							}
+						})
+					}else{
+						this.manyParamContent.forEach((item,index)=>{
+							head[index] = `${this.$t(item)}(${this.manyParamUnit[index]})`
+						})
+					}
+					head.unshift(this.$t("序号")) //向开头添加元素用unshift
+					resultArr = [head]
+					this.manyParamValueArr.forEach((value,index)=>{
+						resultArr.push([index+1,...value.slice(2,value.length)])
+					})
+				}
+
+				let fileName = `${this.paramArr[paramId]+this.$t('历史数据')}${getDateTime.dateTimeStr('y-m-d h:i:s')}`
+				download.methods.createExcelInApp(resultArr,this.paramArr[paramId],fileName)
+			
+				/*#endif*/
+
+				
 				/*#ifdef MP*/
 				const workbook = XLSX.utils.book_new();
 				for(let paramId of this.includeParamArr){
