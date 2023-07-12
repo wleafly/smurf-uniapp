@@ -118,7 +118,7 @@
 			    }
 			    return resultStr.join("");
 			},
-			writeValueToBle(msg,handleStr,failOperation){
+			writeValueToBle(msg,handleStr,failOperation,successOperation){
 				let that = this
 				// console.log(that.$t('连接'))
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
@@ -129,6 +129,9 @@
 					value:typedArray.buffer,
 					success(res) {
 						console.log(msg+"数据发送成功")
+						if(successOperation){
+							successOperation()
+						}
 						
 						uni.onBLECharacteristicValueChange(res => {
 							let resHex = getApp().ab2hex(res.value)
@@ -145,7 +148,7 @@
 							failOperation()
 						}
 						
-						uni.showToast({icon:'none',title: msg+" "+'发送失败'})
+						uni.showToast({icon:'none',title: "设备未连接，"+msg+" "+'发送失败'})
 						console.log("数据发送失败",err)
 					}
 				})
@@ -171,7 +174,7 @@
 						}) 
 					},
 					fail(err) {
-						uni.showToast({icon:'none',title: '发送失败'})
+						uni.showToast({icon:'none',title: '发送失败，设备未连接'})
 						console.log("数据发送失败",err)
 					}
 				})

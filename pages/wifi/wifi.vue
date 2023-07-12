@@ -5,7 +5,7 @@
 			<view style="display: flex;flex-direction: row;align-items: center;">
 				<image src="../../static/bluetooth_blue.png" style="width: 100rpx;height: 100rpx;"></image>
 				<view style="margin: 0rpx 20rpx;">
-					<view class="text-overflow" style="font-size: 35rpx;width: 300rpx;">{{item.name}}</view>
+					<view class="text-overflow" style="font-size: 35rpx;width: 300rpx;">{{item.localName?item.localName:item.name}}</view>
 					<view class="text-overflow" style="color: darkslategray;font-size: 25rpx;width: 300rpx;">{{item.deviceId}}</view>
 					<!-- <view style="color: darkslategray;font-size: 25rpx">可连接</view> -->
 				</view>
@@ -25,6 +25,7 @@
 			<text class="no_blue" style="font-size: 35rpx;font-weight: bold;">{{$t('没有发现蓝牙设备')}}</text>
 			<text class="no_blue">{{$t('下拉搜索')}}</text>
 		</view>
+		<!-- 重连次数{{reconnectTimes}} -->
 	</view>
 </template>
 
@@ -37,7 +38,8 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 				blueToothStateArr:[], //代表连接状态，0表示未连接，1表示正在连接，2表示正在使用
 				usedDeviceIndex:-1, //记录当前连接到的设备的索引
 				connectNum:0,//连接次数，连接蓝牙设备可能多次失败，要自动重连，每次+1,连接成功重置为0
-				isManualClose:false
+				isManualClose:false,
+				// reconnectTimes:0
 			}
 		},
 		onLoad() {
@@ -91,6 +93,13 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 			
 		},
 		methods: {
+			showJson(index){
+				console.log('showJson')
+				uni.showModal({
+					content:JSON.stringify(this.blueToothList[index])
+				})
+			},
+
 			//连接蓝牙设备
 			connectBle(index){
 				
@@ -110,7 +119,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 					//关闭与对应蓝牙设备的连接
 					this.$set(that.blueToothStateArr,index,0)
 					this.isManualClose = true
-					uni.closeBLEConnection({ 
+					uni.closeBLEConnection({
 					  deviceId,
 					  success(res) {
 					    console.log("手动关闭蓝牙连接",res)
@@ -192,10 +201,11 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 														that.$set(that.blueToothStateArr,index,2) //连接成功，将按钮文字改为断开
 														getApp().globalData.deviceArr = [] //清除数据，二次连接时有用
 														getApp().globalData.valueArr = []
+														getApp().globalData.addressToParamMap = []
+														
 														getApp().globalData.includeParamArr = [] //二次连接时，也要清除历史数据，这样进入历史数据页就能重新发f6指令了
 														getApp().globalData.normalValueArr = []
 														getApp().globalData.manyParamValueArr = []
-														getApp().globalData.addressToParamMap = []
 														
 														getApp().globalData.deviceName = that.blueToothList[index].name
 														getApp().globalData.deviceCoreData = { //存储各种id到全局变量，其他页面也要用
@@ -206,14 +216,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 														}
 														
 														getApp().globalData.firstLoading = true //把断开连接后进首页重新加载改成连接成功后重新加载
-														
-														// console.log('服务获取成功:',getApp().globalData.deviceCoreData)
-														
-														// setTimeout(()=>{
-														// 	getApp().writeValueToBle('F900',getApp().handleStrFromBlueTooth,()=>{
-														// 		that.$set(that.blueToothStateArr,index,0)
-														// 	})},1000)
-												
+
 													  },
 													  fail:(res)=> {
 														console.log('启动notify服务失败', res.errMsg)
@@ -280,10 +283,17 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 								console.log("搜索蓝牙", res)
 								uni.onBluetoothDeviceFound((res) => {
 									for(var device of res.devices){
-										if(device.localName!='' && device.name!=''){
-											console.log(device)
+										if(device.localName!='' && device.name!=''){ //苹果机上localName可能不存在
+											console.log('识别到设备:',device)
 											that.blueToothStateArr.push(0) //默认状态是未连接
-											that.blueToothList.push(device)
+											let repeatIndex = that.blueToothList.findIndex((item)=>{return item.deviceId==device.deviceId})
+											if(repeatIndex==-1){ //苹果机会识别重复的设备
+												that.blueToothList.push(device)
+											}else{
+												if(that.blueToothList[repeatIndex].localName==undefined){ //重复项没有localName，则替换，ios机型上有用
+													that.blueToothList[repeatIndex] = device
+												}
+											}
 										}
 									}
 								})
@@ -380,6 +390,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 										title:that.$t('重连成功'),
 										icon:'none'
 									})
+									// that.reconnectTimes++
 								  },
 								  fail:(res)=> {
 									// console.log(res.errMsg)

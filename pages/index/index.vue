@@ -224,6 +224,8 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				originalManyParamsConfigUnit:getApp().globalData.originalManyParamsConfigUnit,
 				homeConfig:getApp().globalData.homeConfig, //判断是否收到花括号数据，在收到第一条后将waitFirstValue属性改为false，使用对象是为了和全局变量绑定
 				limit:8,//小程序端限制折线图数据条数
+				isReload:false, //判断是否正在重新加载数据，重新加载时,onshow方法中的f900不发送
+				reloadNum:0,//连续重新加载的次数，过大则提示重启硬件
 			}
 		},
 		onLoad(){
@@ -248,7 +250,7 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				this.index_with_time = 0
 				this.showLoading = true
 				setTimeout(()=>{
-					this.openWaitingPopup("加载设备","发起指令，正在等待结果")
+						this.openWaitingPopup("加载设备","发起指令，正在等待结果")
 				},200)
 				
 				console.log("首页发送f900")
@@ -257,12 +259,9 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				setTimeout(()=>{
 					this.showLoading = false
 
-					if(this.deviceArr.length==0){
-						this.closeWaitingPopup("加载失败，未获取到数据")
-						uni.showToast({
-							icon:"none",
-							title:this.$t('数据获取失败')
-						})
+					if(this.deviceArr.length==0){ //长度为0，代表没获取到设备
+						this.closeWaitingPopup("加载失败，未获取到数据",true) //传入true会显示是否重新加载的弹窗
+	
 						getApp().globalData.firstLoading = true //下次进入时，会重发f900
 					}
 				},30000) //30秒加载不到数据就自动关闭动画
@@ -282,9 +281,6 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 			// 	}
 			// },3000000)
 
-
-			
-
 		},
 		
 
@@ -292,21 +288,14 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 			// clearInterval(this.electric_timer) //清除更新电量的定时器
 			
 		},
-		onPullDownRefresh() {
+		onPullDownRefresh() { //下拉后，重新加载数据
 			let that = this
 			uni.showModal({
 				content:that.$t("是否重新加载数据"),
 				success(res) {
-					uni.stopPullDownRefresh() //关闭动画
+					uni.stopPullDownRefresh() //关闭下拉操作的顶部动画
 					if(res.confirm){
-						that.openWaitingPopup("重新加载","正在重新加载设备")
-						getApp().writeValueToBle('F900',str=>{
-							if(str.charAt(0)=='[' && str.search(",")!=-1){
-								that.closeWaitingPopup("成功获取设备类型")
-							}
-							getApp().handleStrFromBlueTooth(str)
-						})
-
+						that.reloadData()
 					}
 				}
 			})
@@ -314,15 +303,60 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 			
 		},
 		methods:{
+			reloadData(){ //重新加载数据，用于加载超时或下拉重新加载
+				this.reloadNum++
+
+				let that = this
+				getApp().writeValueToBle('F900',str=>{
+					getApp().handleStrFromBlueTooth(str)
+				},null,()=>{ //指令发送成功的额外操作
+					that.isReload = true //标记是否处于重新加载状态
+					that.index_with_time = 0 //数据清空了，重置带时间的value索引
+					that.showLoading = true //开启背景动画，用于显示加载状态
+					that.openWaitingPopup("重新加载","正在重新加载设备")
+					
+					getApp().globalData.deviceArr = [] //清除数据
+					getApp().globalData.valueArr = []
+					getApp().globalData.addressToParamMap = []
+					that.deviceArr = getApp().globalData.deviceArr //全局指向的引用更改了，this的也要跟着变
+					that.valueArr = getApp().globalData.valueArr 
+					
+					setTimeout(()=>{
+						that.showLoading = false
+						if(that.deviceArr.length==0){
+							if(that.reloadNum >1){
+								that.closeWaitingPopup("加载失败，未获取到数据")
+								uni.showModal({
+									content:"设备获取失败，建议关闭蓝精灵设备后重启"
+								})
+								that.reloadNum = 0
+							}else{
+								that.closeWaitingPopup("加载失败，未获取到数据",true)
+							}
+
+						}
+					},30000) //30秒加载不到数据就自动关闭动画
+				})
+			},
 			openWaitingPopup(title,content){
 				this.popup_title = title
 				this.popup_content = content
 				this.$refs.loading_device.open()
 			},
-			closeWaitingPopup(content){
+			closeWaitingPopup(content,isShowReloadModal){
 				this.popup_content = content
 				setTimeout(()=>{ //延迟1s秒关闭弹窗，好让用户看到失败信息
 					this.$refs.loading_device.close()
+					if(isShowReloadModal){ //关闭弹窗动画后，询问是否重新加载数据
+						uni.showModal({
+							content:"数据获取失败，是否重新加载",
+							success: (res) => {
+								if(res.confirm){
+									this.reloadData()
+								}
+							}
+						})
+					}
 				},1000)
 			},
 			switchManyParamChart(index){
