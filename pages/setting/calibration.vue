@@ -4,8 +4,8 @@
 			<loading :txt="$t('正在获取设备')"></loading>
 		</view>
 		<view v-for="device,index in deviceArr" class="box">
-			<!-- 单参数的情况,param在10以后的设备没有校准指令，暂时不显示 -->
-			<view v-if="device.type==0 && device.param<10">
+			<!-- 单参数的情况,param在10以后的设备在多支情况下没有校准指令，暂时不显示 -->
+			<view v-if="device.type==0 && (device.param<10 || deviceArr.length ==1)">
 				<view class="row" style="padding-top: 20rpx;font-size: 35rpx;font-weight: bold;color: gray;">
 					<view>{{$t(paramArr[device.param])}}</view>
 					<u-icon v-if="deviceArr.length>1" :name="formFlap[index]?'arrow-down':'arrow-up'"
@@ -20,12 +20,13 @@
 					</view>
 					<view v-if="device.param!=4" class="row">
 						<view>{{$t("温度校准")}}</view>
-						<input type="number" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
+						<input type="digit" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
 						<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">{{$t("写入")}}</view>
 					</view>
 					<view v-if="device.param!=3" class="row">
 						<view>{{$t("零点校准")}}</view>
-						<input type="number" class="input" v-model:value="zeroArr[index]" />
+						<!-- orp可以输入负数，小程序要输负数，输入框必须是text类型 -->
+						<input type="number" :type="device.param==4?'text':'number'" class="input" v-model:value="zeroArr[index]" />
 						<view class="button" @click="adjustValue(device.address,zeroArr[index],'零点',device.param)">{{$t("写入")}}
 						</view>
 					</view>
@@ -36,7 +37,7 @@
 					</view>
 					<view v-if="device.param!=3" class="row">
 						<view>{{$t("斜率校准")}}</view>
-						<input type="number" class="input" v-model:value="slopeArr[index]" />
+						<input type="number" :type="device.param==4?'text':'number'" class="input" v-model:value="slopeArr[index]" />
 						<view class="button" @click="adjustValue(device.address,slopeArr[index],'斜率',device.param)">{{$t("写入")}}
 						</view>
 					</view>
@@ -64,6 +65,18 @@
 							</view>
 						</view>
 					</view>
+					<!-- 动态显示的实时数据 -->
+					<view style="margin-top: 20rpx;display: flex;justify-content: space-between;">
+						<view>当前值：
+						{{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().value:''}}
+						</view>
+						<view v-if="device.param==9">浊度：
+						{{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().mud:''}}
+						</view>
+						<view v-if="device.param!=4">温度：
+						{{valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop()?valueArr.slice(-10).filter((item)=>{return (item.param==device.param)&&(item.address?(item.address==device.address):true)}).pop().temperature:''}}
+						℃</view>
+					</view>
 				</view>
 
 
@@ -81,7 +94,7 @@
 				</view>
 				<view class="row">
 					<view>{{$t('温度校准')}}</view>
-					<input type="number" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
+					<input type="digit" class="input" v-model:value="temperatureArr[index]" :placeholder="$t('请输入实际温度')"/>
 					<view class="button" @click="adjustValue(device.address,temperatureArr[index],'温度')">{{$t("写入")}}</view>
 				</view>
 				<view class="row">
@@ -119,7 +132,7 @@
 						:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
 					<view class="button" @click="adjustValue(device.address,'0','斜率',3)">{{$t("写入")}}</view>
 				</view>
-
+			
 			</view>
 
 
@@ -135,6 +148,7 @@
 			return {
 				isNewDevice: getApp().globalData.isNewDevice,
 				deviceArr: getApp().globalData.deviceArr,
+				valueArr:getApp().globalData.valueArr,
 				temperatureArr: [],
 				zeroArr: [],
 				slopeArr: [],
@@ -261,8 +275,9 @@
 					})
 					return
 				}
-				console.log('地址', address, '数值', value, '类型',type, '参数', param?param:'没传')
-				if (parseInt(value) >= 0 && parseInt(value) < 65536) {
+				
+				console.log('地址：', address, '，数值：', value, '，校准项：',type, '，参数：', param?param:'没传')
+				if ((parseInt(value) >= 0 || param=='4') && parseInt(value) < 65536) { 
 					if(type=='温度'){ //温度要乘10,写入设备的值是用户输入的10倍
 						if(value>80){
 							uni.showToast({
@@ -271,13 +286,16 @@
 							})
 							return
 						}else{
-							value = value*10
+							value = value*10 //字符串可以乘不能加
 						}
 					}
-					let value_hex = parseInt(value).toString(16)
+					//ORP校准值可能小于0,需转化成value+65535后转化为十六进制
+					let value_hex = (parseInt(value)<0?parseInt(value)+65535:parseInt(value)).toString(16)
+
 					let msg = ""
 					let value_hex_limit4 = "0000".slice(0, 4 - value_hex.length) + value_hex
-					console.log()
+					
+					console.log(value_hex_limit4)
 					if(this.deviceArr[0].type == 1){ //多参数校准指令头
 						console.log("使用多参数指令")
 						switch (type) {
@@ -381,10 +399,14 @@
 				uni.getConnectedBluetoothDevices({ //获取处于已连接状态的设备
 					success(res) {
 						let isConnect = false
+						
 						for (let device of res.devices) {
 							if (device.deviceId == getApp().globalData.deviceCoreData.deviceId) {
 								isConnect = true
 							}
+						}
+						if(uni.getSystemInfoSync().platform == 'ios'){ //ios获取不到连接的设备，直接将isConnect设为真
+							isConnect = true
 						}
 						if (isConnect) {
 							if(that.deviceArr.length==0){ 
@@ -396,7 +418,7 @@
 						} else {
 							uni.showModal({
 								content: that.$t('设备连接已断开，请重新连接'),
-								showCancel: false,
+								// showCancel: false,
 								success(res) {
 									if (res.confirm) {
 										uni.navigateBack()
@@ -404,6 +426,9 @@
 								}
 							})
 						}
+					},
+					fail() {
+						console.log("调用getConnectedBluetoothDevices失败")
 					}
 				})
 			} else {

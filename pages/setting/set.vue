@@ -1,10 +1,15 @@
 <template>
 	<view>
-		<view style="background-color: white;height: 100rpx;font-size: 35rpx;margin: 30rpx;border-radius: 30rpx;
-		display: flex;align-items: center;justify-content: space-between;padding-left: 30rpx;padding-right: 30rpx;">
+		<view class="picker_box">
 			<view>{{$t('实时数据自动下载')}}</view>
-			<switch :checked="autoDownload" @change="switchChange"></switch>
-			
+			<switch :checked="autoDownload" @change="autoDownloadSwitchChange"></switch>
+		</view>
+		<view class="picker_box" style="flex-direction: column;align-items: flex-start;">
+			<view style="display: flex;justify-content: space-between;width: 100%;align-items: center;">
+				<view>{{$t('识别单只传感器')}}</view>
+				<switch :checked="onlyOneSensor" @change="onlyOneSensorSwitchChange"></switch>
+			</view>
+			<view style="color: gray;font-size: 25rpx;margin-top: 20rpx;">只需识别一支传感器时，开启此项可提升加载速度</view>
 		</view>
 		<view style="background-color: white;border-radius: 30rpx;padding: 30rpx;margin: 30rpx;">
 			<view style="font-size: 35rpx;">{{$t('多参数配置')}}</view>
@@ -30,6 +35,7 @@
 		data() {
 			return {
 				autoDownload:null,
+				onlyOneSensor:null,
 				localArr:[],
 				codCanSelect:['COD','未连接'],
 				canSelectParamArr:[]
@@ -48,14 +54,19 @@
 				this.localArr = getApp().globalData.manyParamsDefalut.slice(0)
 
 			},
-			switchChange(e){
+			autoDownloadSwitchChange(e){
 				uni.setStorageSync("autoDownload",e.detail.value)
+				getApp().globalData.autoDownload = e.detail.value 
+				
+			},
+			onlyOneSensorSwitchChange(e){
 				if(e.detail.value){
-					getApp().globalData.autoDownload = true 
-				}else{
-					getApp().globalData.autoDownload = false
-					
+					uni.showModal({
+						content:"仅供测试版使用，旧版本EXO-mini1请关闭该模式"
+					})
 				}
+				uni.setStorageSync("onlyOneSensor",e.detail.value)
+				getApp().globalData.onlyOneSensor = e.detail.value 
 			},
 			bindPickerChange(index,e){
 				if(index == 0){
@@ -63,12 +74,13 @@
 				}else{
 					this.$set(this.localArr,index,this.canSelectParamArr[e.detail.value])
 				}
-
+				
 			}
 		},
 		onLoad(){
 			this.canSelectParamArr = getApp().globalData.manyParamCustomOptions
 			this.autoDownload = getApp().globalData.autoDownload
+			this.onlyOneSensor = getApp().globalData.onlyOneSensor
 		},
 		onShow() {
 			let arr = uni.getStorageSync("manyParamsConfig") || getApp().globalData.manyParamsDefalut
@@ -83,6 +95,9 @@
 	page {
 		background-color: #eee;
 	}
-
+	.picker_box{
+		background-color: white;font-size: 35rpx;margin: 30rpx;border-radius: 30rpx;
+		display: flex;align-items: center;justify-content: space-between;padding: 20rpx 30rpx
+	}
 
 </style>

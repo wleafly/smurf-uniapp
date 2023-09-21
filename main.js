@@ -1,5 +1,5 @@
 import App from './App'
-
+import share from 'static/share.js'
 import en from './locale/en.json'
 import zhHans from './locale/zh-Hans.json'
 const messages = {
@@ -16,6 +16,8 @@ let i18nConfig = {
 import Vue from 'vue'
 import uView from '@/uni_modules/uview-ui'
 Vue.use(uView)
+Vue.mixin(share)
+
 
 import VueI18n from 'vue-i18n'// v8.x
 // import messages from 'locale/index.js'
@@ -27,7 +29,8 @@ Vue.config.productionTip = false
 App.mpType = 'app'
 const app = new Vue({
 	i18n,
-    ...App
+    ...App,
+	share
 })
 app.$mount()
 // #endif
@@ -45,3 +48,4 @@ export function createApp() {
   }
 }
 // #endif
+

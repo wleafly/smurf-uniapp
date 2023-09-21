@@ -117,22 +117,22 @@
 					content:that.$t("获取历史数据会停止接收实时数据，是否继续"),
 					success(res) {
 						if(res.confirm){
-							let getNum = false
-							setTimeout(()=>{ //超时后没读到条数，询问是否直接FB
-								if(!getNum){
-									uni.showModal({
-										content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
-										success(res) {
-											if(res.confirm){
-												console.log("发送FB")
-												getApp().writeValueToBle("FB",str=>{
-													that.handleStr(str)
-												})
-											}
-										}
-									})
-								}
-							},7000)
+							// let getNum = false
+							// setTimeout(()=>{ //超时后没读到条数，询问是否直接FB
+							// 	if(!getNum){
+							// 		uni.showModal({
+							// 			content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
+							// 			success(res) {
+							// 				if(res.confirm){
+							// 					console.log("发送FB")
+							// 					getApp().writeValueToBle("FB",str=>{
+							// 						that.handleStr(str)
+							// 					})
+							// 				}
+							// 			}
+							// 		})
+							// 	}
+							// },7000) 
 							getApp().writeValueToBle("F6",str=>{
 								console.log(str)
 								if(str.indexOf('[')!=-1&&str.indexOf(']')!=-1){ 
@@ -140,7 +140,7 @@
 									if(/^\[\d+\]/.test(str)){ //d+不包括0
 										let count = parseInt(str.split("[")[1].split("]")[0])
 										if(count && typeof count == "number"){
-											getNum = true
+											// getNum = true
 											if(count<200){ //小于200条直接发FB
 												getApp().writeValueToBle("FB",str=>{
 													that.handleStr(str)
@@ -161,7 +161,7 @@
 										}
 									}
 									if(str=='[0]'){
-										getNum = true
+										// getNum = true
 										uni.showToast({
 											icon:'none',
 											title:'暂无历史数据'

@@ -140,7 +140,7 @@
 	"设备连接断开":"device disconnection",
 	"请先连接设备":"please connect the device first",
 	
-	
+	"识别单只传感器":"get only one sensor",
 	"实时数据自动下载":"download real-time data automatically",
 	"多参数配置":"multi-parameter config",
 	"参数":"parameter",

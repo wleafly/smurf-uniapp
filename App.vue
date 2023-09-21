@@ -19,6 +19,7 @@
 		},
 		globalData:{
 			autoDownload:false,//是否自动下载实时数据
+			onlyOneSensor:false,//是否识别到单只传感器就收手，只对新版有效
 			deviceName:"", //蓝精灵的名字
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
@@ -32,6 +33,20 @@
 			paramUnitMap:new Map([["COD","mg/L"],["浊度(COD)","NTU"],["电导率m","mS/cm"],["电导率μ","μS/cm"],["pH",""],["PH",""],["ORP","mV"],["溶解氧","mg/L"],["铵氮/离子类","mg/L"],["浊度","NTU"],
 				["电导率","mS/cm"],["盐度","PSU"],["余氯","mg/L"],["叶绿素","μg/L"],["蓝绿藻","Kcells/mL"],["透明度","mm"],["悬浮物","mg/L"],["水中油","mg/L"],["色度","Hazen"],["污泥浓度","g/L"],["未连接",""]]),
 			
+			homeConfig:{
+				waitFirstValue:false//控制首页设备名右侧是否显示加载动画
+			},
+			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
+			tempStr:"", //临时数据，存储不完整的蓝牙数据
+			isFirstData:true,
+			isNewDevice:null,
+			oldParamId:null,
+			addressToParamMap:[],
+			firstLoading:true,//代表进入数据页是否要发f900
+			
+			includeParamArr:[], //历史数据页包含的参数
+			normalValueArr:[],//历史数据页常规参数值数据
+			manyParamValueArr:[],//历史数据页多参数值数据
 			
 			// deviceArr:[
 			// 	{
@@ -73,21 +88,8 @@
 			// 	{param:6,address:6,value:27.4,temperature:23.5,electric:3.763},//一般类型
 			// 	{param:4,address:16,value:55,electric:3.763}//ORP，不带温度
 			// ],
-			homeConfig:{ 
-				waitFirstValue:false//控制首页设备名右侧是否显示加载动画
-			},
-			deviceCoreData:{},//存蓝牙设备的核心数据，设备id、服务id、读写id等
-			tempStr:"", //临时数据，存储不完整的蓝牙数据
-			isFirstData:true,
-			isNewDevice:null,
-			oldParamId:null,
-			addressToParamMap:[],
-			firstLoading:true,//代表进入数据页是否要发f900
-			
-			includeParamArr:[], //历史数据页包含的参数
-			normalValueArr:[],//历史数据页常规参数值数据
-			manyParamValueArr:[],//历史数据页多参数值数据
-			// tempDownloadArr:null//临时存放下载的实时数据，防止过于频繁的读写操作
+
+
 
 		},
 		methods:{
@@ -132,22 +134,18 @@
 						if(successOperation){
 							successOperation()
 						}
-						
 						uni.onBLECharacteristicValueChange(res => {
 							let resHex = getApp().ab2hex(res.value)
-							let result = getApp().hexCharCodeToStr(resHex)
+							let result = getApp().hexCharCodeToStr(resHex) 
 							result = String(result)
 							handleStr(result)  //外部传入的方法，对接收到的字符串做处理
 						
 						}) 
-						
-						
 					},
 					fail(err) {
 						if(failOperation){ //有方法传入再执行
 							failOperation()
 						}
-						
 						uni.showToast({icon:'none',title: "设备未连接，"+msg+" "+'发送失败'})
 						console.log("数据发送失败",err)
 					}
@@ -170,8 +168,7 @@
 							let result = getApp().hexCharCodeToStr(resHex)
 							result = String(result)
 							handleStr(result)  //外部传入的方法，对接收到的字符串做处理
-						
-						}) 
+						})
 					},
 					fail(err) {
 						uni.showToast({icon:'none',title: '发送失败，设备未连接'})
@@ -208,7 +205,7 @@
 					}
 				}else if(result.charAt(0)!='{' && result.search("}")!=-1){ //第一位不是'{',且含有'}',说明是长数据的后半截
 					if(result.endsWith("}[OK]") || result.endsWith("}[Error]")){ //f900后发fc等指令可能会出现的情况
-						console.log("接收到了后半截数据带[OK]或[Error]的情况")
+						console.log("接收到了后半截数据带[OK]或[Error]的情况") 
 						result = result.split("[")[0]
 					}
 					
@@ -235,7 +232,7 @@
 
 					
 			},
-			judgeNewOrOld(){  //判断是新设备还是老设备
+			judgeNewOrOld(){  //判断是新设备还是老设备，由于新设备修改了广播包，已废弃
 				
 				if(getApp().globalData.isFirstData){ //第一次获取到带{}的数据时执行
 					console.log("判断新旧设备")
@@ -284,11 +281,11 @@
 								record.bod = numArr[4]
 							}
 						}else{ //ORP
-							record = {
+							record = { 
 								address:numArr[0],
 								param:param,
 								value:numArr[1],
-								electric:numArr[2] 
+								electric:numArr[2]
 							}
 						}
 						

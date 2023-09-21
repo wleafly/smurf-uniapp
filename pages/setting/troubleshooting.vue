@@ -67,6 +67,9 @@
 							  isConnect = true
 						  }
 					  }
+					  if(uni.getSystemInfoSync().platform == 'ios'){ //ios获取不到连接的设备，直接将isConnect设为真
+						  isConnect = true
+					  }
 					  if(isConnect){
 						  that.statusArr[0] = 1
 						  that.sequenceArr.push(that.$t("测试指令"))

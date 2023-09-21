@@ -53,9 +53,9 @@
 									
 									getApp().writeBufferToBle(that.stringToArrayBuffer(msg),str=>{
 										console.log(str)
-										if(str=="AT+BLENAME="+msg){
-											console.log('有AT+BLENAME回执')
-										}
+										// if(str=="AT+BLENAME="+msg){
+										// 	console.log('有AT+BLENAME回执')
+										// }
 									},undefined,()=>{
 										uni.showModal({
 											content:"修改成功，重启设备后生效"

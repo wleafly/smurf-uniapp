@@ -1,13 +1,12 @@
 <template>
 	<view >
 		<!-- 蓝牙设备列表 -->
-		<view v-for="item,index in blueToothList" class="blue_item" :style="blueToothStateArr[index]==2?'background-color: #E5F3FF':''">
+		<view @longpress="getBluetoothInfo(index)" v-for="item,index in blueToothList" class="blue_item" :style="blueToothStateArr[index]==2?'background-color: #E5F3FF':''">
 			<view style="display: flex;flex-direction: row;align-items: center;">
 				<image src="../../static/bluetooth_blue.png" style="width: 100rpx;height: 100rpx;"></image>
 				<view style="margin: 0rpx 20rpx;">
 					<view class="text-overflow" style="font-size: 35rpx;width: 300rpx;">{{item.localName?item.localName:item.name}}</view>
 					<view class="text-overflow" style="color: darkslategray;font-size: 25rpx;width: 300rpx;">{{item.deviceId}}</view>
-					<!-- <view style="color: darkslategray;font-size: 25rpx">可连接</view> -->
 				</view>
 			</view>
 			<view style="display: flex;flex-direction: row;align-items: center;">
@@ -26,6 +25,10 @@
 			<text class="no_blue">{{$t('下拉搜索')}}</text>
 		</view>
 		<!-- 重连次数{{reconnectTimes}} -->
+		<!-- <button @click="sendFA()">FA</button> -->
+		
+<!-- 		<input style="border: 1rpx solid gray;margin: 40rpx 0;height: 50rpx;" placeholder="请输入指令" v-model:value="command"/>
+		<button @click="sendCommand">发送指令</button> -->
 	</view>
 </template>
 
@@ -34,6 +37,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 	export default {
 		data() {
 			return {
+				command:"",//测试指令
 				blueToothList: [],
 				blueToothStateArr:[], //代表连接状态，0表示未连接，1表示正在连接，2表示正在使用
 				usedDeviceIndex:-1, //记录当前连接到的设备的索引
@@ -93,6 +97,29 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 			
 		},
 		methods: {
+			getBluetoothInfo(index){
+				let info = getApp().ab2hex(this.blueToothList[index].advertisData) //advertisData是arrayBuffer类型，需转化
+				console.log(this.hexToString(info))
+				return this.hexToString(info)
+			},
+			hexToString(str){
+			　　var val="",len = str.length/2
+			　　for(var i = 0; i < len; i++){
+			　　　　val += String.fromCharCode(parseInt(str.substr(i*2,2),16))
+			　　}
+				return val
+			},
+			sendCommand(){
+				// console.log(this.command)
+				getApp().writeValueToBle(this.command,(str)=>{
+					console.log(str)
+				})
+			},
+			sendFA(){
+				getApp().writeValueToBle('FA',(str)=>{
+					console.log(str)
+				})
+			},
 			showJson(index){
 				console.log('showJson')
 				uni.showModal({
@@ -197,6 +224,14 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 													  characteristicId:notifyCharacteristicId,
 													  success:(res)=> {
 														console.log("启动notify服务成功")
+														console.log("广播包内容",that.getBluetoothInfo(index))
+														if(that.getBluetoothInfo(index) == "Version 1.1"){
+															console.log('有版本号，是新设备')
+															getApp().globalData.isNewDevice = true
+														}else{
+															console.log('无版本号，是旧设备')
+															getApp().globalData.isNewDevice = false
+														}
 														//执行到这一步才能写数据
 														that.$set(that.blueToothStateArr,index,2) //连接成功，将按钮文字改为断开
 														getApp().globalData.deviceArr = [] //清除数据，二次连接时有用
