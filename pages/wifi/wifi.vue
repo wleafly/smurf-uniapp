@@ -225,7 +225,7 @@ import toast from '../../uni_modules/uview-ui/libs/config/props/toast';
 													  success:(res)=> {
 														console.log("启动notify服务成功")
 														console.log("广播包内容",that.getBluetoothInfo(index))
-														if(that.getBluetoothInfo(index) == "Version 1.1"){
+														if(that.getBluetoothInfo(index) == "V2"){ //识别到V2会直接设定为新设备
 															console.log('有版本号，是新设备')
 															getApp().globalData.isNewDevice = true
 														}else{

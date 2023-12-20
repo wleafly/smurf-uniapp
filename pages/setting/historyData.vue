@@ -32,11 +32,14 @@
 
 			
 			<qiun-data-charts type="line" :chartData="chartData" :opts="opts" :ontouch="true" canvas2d canvasId="chart2d"/>
+			<!-- <view style="color: gray;float: right;">序号越大，时间越靠后</view> -->
 			<!-- <button @click="addData" style="margin-top: 20rpx;">添加假数据</button> -->
 			<view style="display: flex;margin-top: 50rpx;justify-content: space-between;">
 				<button @click="deleteData()" style="width: 45%;background-color: #ff6363;color: white;font-weight: bold;">{{$t("删除历史数据")}}</button>
 				<button @click="downloadData()" style="width: 45%;background-color: #89B7EC;color: white;font-weight: bold;">{{$t("获取Excel表格")}}</button>
 			</view>
+			
+			
 			<!-- <button @click="clickF6">发送F6</button> -->
 			<!-- <button @click="clickFB">模拟发送FB</button> -->
 			<!-- <button @click="clickFBTrue" style="margin: 20rpx 0">FB获取历史数据</button> -->
@@ -117,22 +120,6 @@
 					content:that.$t("获取历史数据会停止接收实时数据，是否继续"),
 					success(res) {
 						if(res.confirm){
-							// let getNum = false
-							// setTimeout(()=>{ //超时后没读到条数，询问是否直接FB
-							// 	if(!getNum){
-							// 		uni.showModal({
-							// 			content:that.$t("f6指令未读取到数据条数，是否仍要读取数据"),
-							// 			success(res) {
-							// 				if(res.confirm){
-							// 					console.log("发送FB")
-							// 					getApp().writeValueToBle("FB",str=>{
-							// 						that.handleStr(str)
-							// 					})
-							// 				}
-							// 			}
-							// 		})
-							// 	}
-							// },7000) 
 							getApp().writeValueToBle("F6",str=>{
 								console.log(str)
 								if(str.indexOf('[')!=-1&&str.indexOf(']')!=-1){ 
@@ -550,6 +537,9 @@
 					if(arr[0]==0){
 						if(this.includeParamArr.indexOf(arr[1])==-1){ //如果是第一次识别到的参数，加入参数队列中
 							this.includeParamArr.push(arr[1])
+						}
+						if(arr[1]==4){ //对于orp，要判断值是否异常，有时候会变成6万多，但上限是正负3万多
+							arr[2]=arr[2]<-32768?(arr[2]+65536):(arr[2]>32768?(arr[2]-65536):arr[2])
 						}
 						this.normalValueArr.push(arr)
 					}else if(arr[0]==1){

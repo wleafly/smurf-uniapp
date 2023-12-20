@@ -5,7 +5,7 @@
 		</view>
 		<view v-for="device,index in deviceArr" class="box">
 			<!-- 单参数的情况,param在10以后的设备在多支情况下没有校准指令，暂时不显示 -->
-			<view v-if="device.type==0 && (device.param<10 || deviceArr.length ==1)">
+			<view v-if="device.type==0">
 				<view class="row" style="padding-top: 20rpx;font-size: 35rpx;font-weight: bold;color: gray;">
 					<view>{{$t(paramArr[device.param])}}</view>
 					<u-icon v-if="deviceArr.length>1" :name="formFlap[index]?'arrow-down':'arrow-up'"
@@ -109,7 +109,7 @@
 				</view>
 				<view v-if="manyParamsOption!=3" class="row">
 					<view>{{$t('零点校准')}}</view>
-					<input type="number" class="input" v-model:value="zeroArr[index]" />
+					<input :type="manyParamsOption!=4?'number':'text'" class="input" v-model:value="zeroArr[index]" />
 					<view class="button" @click="adjustManyParams(device.address,zeroArr[index],'零点')">{{$t("写入")}}</view>
 				</view>
 				<view v-else class="row">
@@ -119,7 +119,7 @@
 				</view>
 				<view v-if="manyParamsOption!=3" class="row">
 					<view>{{$t('斜率校准')}}</view>
-					<input type="number" class="input" v-model:value="slopeArr[index]" />
+					<input :type="manyParamsOption!=4?'number':'text'" class="input" v-model:value="slopeArr[index]" />
 					<view class="button" @click="adjustManyParams(device.address,slopeArr[index],'斜率')">{{$t("写入")}}</view>
 				</view>
 				<view v-else class="row">
@@ -130,7 +130,7 @@
 					<view class="button" @click="selectPH4=false"
 						style="width: 25%;border: 1rpx solid lightgrey;color: black;"
 						:style="selectPH4?'background-color: transparent;':'background-color: #ddd'">9.18</view>
-					<view class="button" @click="adjustValue(device.address,'0','斜率',3)">{{$t("写入")}}</view>
+					<view class="button" @click="adjustValue(device.address,selectPH4?'0':'1','斜率',3)">{{$t("写入")}}</view>
 				</view>
 			
 			</view>
@@ -157,15 +157,16 @@
 				paramArr: getApp().globalData.paramArr,
 				formFlap: [], //控制表单显示与折叠,false代表显示，所以默认都显示
 				selectPH4: true, //校准ph时用的
-				zeroAdjustArr: ["", "fe0606", "fe0606", "fe0608", "fe060a", "fe060c", "fe060e", "fe0610", "fe0606",
+				zeroAdjustArr: ["", "fe0606", "fe0606", "fe0608", "fe06aa", "fe060c", "fe060e", "fe0610", "fe0606",
 					"fe0602"
-				], //零点校准的指令列表，索引和param对应
+				], //零点校准的指令列表，索引和param对应，fe060a是校准ORP的，现改成fe06aa，避免指令被吞（芯片无法接收第三个字节是0a的指令）
 				slopeAdjustArr: ["", "fe0607", "fe0607", "fe0609", "fe060b", "fe060d", "fe060f", "fe0611", "fe0607",
 					"fe0603"
 				], //斜率校准的指令列表
 				manyParamsOptionArr: ["COD", this.$t("浊度(COD)"), this.$t("电导率"), "pH", "ORP", this.$t("溶解氧"), this.$t("铵氮/离子类"), this.$t("浊度"), this.$t("盐度")],
 				manyParamsOption: -1,
-				isShowLoading: true
+				isShowLoading: true,
+
 			}
 		},
 		methods: {
@@ -230,30 +231,53 @@
 											icon: "none"
 										})
 									}
-								}, 10000)
+								}, 16000)
 								//向蓝牙设备发送改地址指令
-								getApp().writeValueToBle(msg, str => {
-									console.log(str)
-									if (str.search("[OK]") != -1) {
-										uni.hideLoading() //主动关闭加载
-										uni.showToast({
-											title: that.$t("修改成功"),
-											icon: "none"
-										})
-										alter_success = true
-										getApp().globalData.addressToParamMap[newAddress] = getApp()
-											.globalData.addressToParamMap[that.deviceArr[index].address]
-										that.deviceArr[index].address = newAddress
-										getApp().globalData.firstLoading = true
-									}
-									// if(str.search("[Error]")!=-1){
-									// 	uni.hideLoading()  //主动关闭加载
-									// 	uni.showToast({
-									// 		title:"更改失败，请重新发送",
-									// 		icon:"none"
-									// 	})
-									// }
-								})
+								if(getApp().globalData.isNewDevice){
+									getApp().stopFAandSend(msg,str => {
+										console.log(str)
+										if (str.search("[OK]") != -1) {
+											uni.hideLoading() //主动关闭加载
+											uni.showToast({
+												title: that.$t("修改成功"),
+												icon: "none"
+											})
+											alter_success = true
+											getApp().globalData.addressToParamMap[newAddress] = getApp()
+												.globalData.addressToParamMap[that.deviceArr[index].address]
+											that.deviceArr[index].address = newAddress
+											getApp().globalData.firstLoading = true
+											//新设备校准完后，FA会失效，必须发f900重新激活FA
+											let currentLen = that.valueArr.length
+											getApp().writeValueToBle('F900',(str)=>{
+												getApp().handleStrFromBlueTooth(str)
+												if(that.valueArr.length-currentLen == that.deviceArr.length){
+													console.log("开始发送FA")
+													getApp().sendFA()
+												}
+											},null,()=>{
+												getApp().globalData.firstLoading = false  //这里发起f900后，数据页就不要发了
+											})
+										}
+									})
+								}else{
+									getApp().writeValueToBle(msg, str => {
+										console.log(str)
+										if (str.search("[OK]") != -1) {
+											uni.hideLoading() //主动关闭加载
+											uni.showToast({
+												title: that.$t("修改成功"),
+												icon: "none"
+											})
+											alter_success = true
+											getApp().globalData.addressToParamMap[newAddress] = getApp()
+												.globalData.addressToParamMap[that.deviceArr[index].address]
+											that.deviceArr[index].address = newAddress
+											getApp().globalData.firstLoading = true
+										}
+									})
+								}
+
 
 							} else {
 								uni.showToast({
@@ -326,6 +350,9 @@
 								break
 							case '斜率':
 								msg = "fe0604"
+								if(param == 3 && this.selectPH4 == true){ //ph校准4时用的是地址02
+									msg = "fe0602"
+								}
 								break
 							case '浊度零点':
 								msg = "fe0620"
@@ -337,7 +364,7 @@
 					}
 
 					msg += value_hex_limit4
-					if (this.deviceArr.length>1) { //新设备单参数可能接多支，所以指令后面要加地址
+					if (getApp().globalData.isNewDevice) { //新设备单参数可能接多支，所以指令后面要加地址
 						msg += address.toString(16).length < 2 ? '0' + address.toString(16) : address.toString(16)
 					}
 					console.log(msg) //以后替换成向蓝牙发送的逻辑
@@ -354,35 +381,64 @@
 								icon: "none"
 							})
 						}
-					}, 10000)
+					}, 16000)
 					let that = this
-					getApp().writeValueToBle(msg, str => {
-						// console.log(str)
-						getApp().handleStrFromBlueTooth(str) 
-						if (str.search("[OK]") != -1) {
-							uni.hideLoading() //主动关闭加载
-							uni.showToast({
-								title: that.$t("校准成功"),
-								icon: "none"
-							})
-							alter_success = true
-							//校准成功后，数据会中断，所以立刻发起f900
-							getApp().writeValueToBle('F900',(str)=>{
-								getApp().globalData.firstLoading = false 
-								getApp().handleStrFromBlueTooth(str)
-							})
+					if(getApp().globalData.isNewDevice){
+						getApp().stopFAandSend(msg,str=>{
+							if (str.search("[OK]") != -1) {
+								uni.hideLoading() //主动关闭加载
+								uni.showToast({
+									title: that.$t("校准成功"),
+									icon: "none"
+								})
+								alter_success = true
+								//校准成功后，继续发送FA即可
+								getApp().sendFA()
+								
+								// getApp().globalData.firstLoading = true
+							}
+							if(str.search("[Error]")!=-1){
+								get_error = true
+								uni.hideLoading()  //主动关闭加载
+								console.log('收到[Error]')
+								uni.showToast({
+									title: that.$t("校准失败，请重新发送"),
+									icon: "none"
+								})
+								getApp().sendFA() //校准失败，也要保证数据不中断
+							}
+						})
+					}else{
+						getApp().writeValueToBle(msg, str => {
+							// console.log(str)
+							getApp().handleStrFromBlueTooth(str)  //旧设备，保证ok前发来的数据还能显示
+							if (str.search("[OK]") != -1) {
+								uni.hideLoading() //主动关闭加载
+								uni.showToast({
+									title: that.$t("校准成功"),
+									icon: "none"
+								})
+								alter_success = true
+								//校准成功后，数据会中断，所以立刻发起f900
+								getApp().writeValueToBle('F900',(str)=>{
+									getApp().globalData.firstLoading = false 
+									getApp().handleStrFromBlueTooth(str)
 							
-							// getApp().globalData.firstLoading = true
-						}
-						if(str.search("[Error]")!=-1){
-							get_error = true
-							uni.hideLoading()  //主动关闭加载
-							uni.showToast({
-								title: that.$t("校准失败，请重新发送"),
-								icon: "none"
-							})
-						}
-					})
+								})
+								
+								// getApp().globalData.firstLoading = true
+							}
+							if(str.search("[Error]")!=-1){
+								get_error = true
+								uni.hideLoading()  //主动关闭加载
+								uni.showToast({
+									title: that.$t("校准失败，请重新发送"),
+									icon: "none"
+								})
+							}
+						})
+						
+					}
 
 				} else {
 					uni.showToast({
@@ -410,10 +466,34 @@
 						}
 						if (isConnect) {
 							if(that.deviceArr.length==0){ 
-								getApp().writeValueToBle('F900',(str)=>{
-									getApp().globalData.firstLoading = false  //这里发起f900后，数据页就不要发了
-									getApp().handleStrFromBlueTooth(str)
+								uni.showModal({
+									content:"未加载传感器",
+									showCancel:false,
+									success(res) {
+										if (res.confirm) {
+											uni.navigateBack()
+										}
+									}
 								})
+								// if(getApp().globalData.isNewDevice){ //新设备发完f900还要发FA
+								// 	getApp().writeValueToBle('F900',(str)=>{
+								// 		getApp().handleStrFromBlueTooth(str)
+								// 		if(that.valueArr.length == that.deviceArr.length){
+								// 			console.log("开始发送FA")
+								// 			getApp().sendFA()
+								// 		}
+								// 	},null,()=>{
+								// 		getApp().globalData.firstLoading = false  //这里发起f900后，数据页就不要发了
+								// 	})
+
+								// }else{ //旧设备只需要发F900
+								// 	getApp().writeValueToBle('F900',(str)=>{
+								// 		getApp().handleStrFromBlueTooth(str)
+								// 	},null,()=>{
+								// 		getApp().globalData.firstLoading = false  //这里发起f900后，数据页就不要发了
+								// 	})
+								// }
+
 							}
 						} else {
 							uni.showModal({
@@ -434,10 +514,10 @@
 			} else {
 				uni.showModal({
 					content: this.$t('设备未连接'),
-					showCancel: false,
+					
 					success(res) {
 						if (res.confirm) {
-							// uni.navigateBack()
+							uni.navigateBack()
 						}
 					}
 				})

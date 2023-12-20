@@ -50,7 +50,6 @@
 									// let pwd = '<pwd123456>'
 									let msg = '<' + that.content + '>' //修改设备名称
 									console.log('要改的名字是:'+msg)
-									
 									getApp().writeBufferToBle(that.stringToArrayBuffer(msg),str=>{
 										console.log(str)
 										// if(str=="AT+BLENAME="+msg){

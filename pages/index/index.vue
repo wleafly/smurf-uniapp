@@ -40,8 +40,10 @@
 		</view>
 		
 		<view class="element_style flex_row_between shadow" style="margin: 20rpx 15rpx;background-color: rgba(255, 255, 255, 0.8);"> 
-			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">{{$t('间隔时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].interval?': '+valueArr[index_with_time].interval+'min':''):''}}</view>
-			<view class="time_style" @click="toAlterTime()">{{$t('测试时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].testTime?': '+valueArr[index_with_time].testTime+'min':''):''}}</view>
+			<!-- <view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">{{$t('间隔时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].interval?': '+valueArr[index_with_time].interval+'min':''):''}}</view> -->
+			<!-- <view class="time_style" @click="toAlterTime()">{{$t('测试时间')}}{{valueArr[index_with_time]?(valueArr[index_with_time].testTime?': '+valueArr[index_with_time].testTime+'min':''):''}}</view> -->
+			<view class="time_style" style="border-right: 1rpx solid lightgray;" @click="toAlterTime()">{{$t('间隔时间')}}{{interval?': '+interval+'min':''}}</view>
+			<view class="time_style" @click="toAlterTime()">{{$t('测试时间')}}{{testTime?': '+testTime+'min':''}}</view>
 		</view>
 		
 		<view v-if="deviceArr[0]">
@@ -165,7 +167,7 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				popup_content:'',
 				testTime_input: '',
 				interval_input: '',
-				index_with_time: 0,//valueArr中包含间隔和测试时间的索引
+				// index_with_time: 0,//valueArr中包含间隔和测试时间的索引
 				deviceName:'',
 				manyParamLightOption:-1, //多参数高亮选项，默认-1代表显示温度
 				lightOptions:[0,0,0,0],//高亮选项，选中哪个就显示哪个图表，0是参数，1温度，2浊度，3BOD,默认显示参数
@@ -189,13 +191,13 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				eq:0, //剩余电量
 				batteryColor:"",
 				electric_timer:null, //定时器，每隔一段时间刷新电量
-				opts: {
+				opts: { //多支情况下，每一个折线图都用到了opt的深拷贝
 					// enableScroll: true,
+					// scrollPosition:'right',
 					update:true,
 					legend: {show:false},
 					animation:false,
 					duration:0,	
-					// scrollPosition:'right',
 					xAxis: {
 					  itemCount: 8,
 					  boundaryGap: "justify",//消除左右间距
@@ -205,10 +207,9 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 						showTitle:true,
 						data: [{
 							title: "", //纵坐标单位
+							tofix: 0, //保留几位小数，0表示随数据自动调整
 							// min:0,
 							// max:100
-							tofix: 0, //保留几位小数，0表示随数据自动调整
-					
 						}]
 					}
 				},
@@ -221,9 +222,11 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				homeConfig:getApp().globalData.homeConfig, //判断是否收到花括号数据，在收到第一条后将waitFirstValue属性改为false，使用对象是为了和全局变量绑定
 				limit:8,//小程序端限制折线图数据条数
 				isReload:false, //判断是否正在重新加载数据，重新加载时,onshow方法中的f900不发送
-				reloadNum:0,//连续重新加载的次数，过大则提示重启硬件
-				command:"f900",
 				wait_time:30000, //f900加载动画的持续时间
+				
+				interval:null,
+				testTime:null,
+				
 			}
 		},
 		onLoad(){
@@ -231,9 +234,6 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 			//小程序端App Launch读不到globalData
 			if(uni.getStorageSync("autoDownload")){
 				getApp().globalData.autoDownload = uni.getStorageSync("autoDownload")
-			}
-			if(uni.getStorageSync("onlyOneSensor")){
-				getApp().globalData.onlyOneSensor = uni.getStorageSync("onlyOneSensor")
 			}
 			/*#ifdef MP*/
 				if(uni.getStorageSync("language")){
@@ -244,66 +244,101 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 		},
 
 		onShow() {
-			
-			this.wait_time = getApp().globalData.isNewDevice?15000:30000 //新设备加载速度通常在15秒以内
+			this.wait_time = getApp().globalData.isNewDevice?20000:30000 //新设备加载速度通常在20秒以内
 			this.manyParamsConfig = uni.getStorageSync("manyParamsConfig") //获取多参数参数表配置
-			// console.log(this.manyParamsConfig)
-			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
-				
-				if(getApp().globalData.onlyOneSensor && getApp().globalData.isNewDevice){ //如果设置了识别单只传感器，且是新版蓝精灵，就用f90001，加快扫描速度
-					this.command = 'f90001'
-				}else{
-					this.command = 'f900'
-				}
-				// console.log("首页发送f900")
-				getApp().writeValueToBle(this.command,getApp().handleStrFromBlueTooth,null,()=>{ //f900发送成功才执行以下语句
-					this.index_with_time = 0
-					this.showLoading = true //开启背景动画
-					setTimeout(()=>{ //加入延时是防止页面没加载好就调用弹出层导致报错
-						this.openWaitingPopup("加载设备","发起指令，正在等待结果")
-					},200)
-					
-					getApp().globalData.firstLoading = false //再次点进来时，就不再重发f900
-					setTimeout(()=>{
-						this.showLoading = false
-						if(this.deviceArr.length==0){ //长度为0，代表没获取到设备
-							this.closeWaitingPopup("加载失败，未获取到数据") //传入true会显示是否重新加载的弹窗
-							this.loadingOvertime()
-							getApp().globalData.firstLoading = true //下次进入时，会重发f900
-						}
-					},this.wait_time) //30秒加载不到数据就自动关闭动画
-				})
-
-			}
-
+			
 			this.deviceName = getApp().globalData.deviceName //app.vue中应为""
 			this.deviceArr = getApp().globalData.deviceArr //app.vue中应为[]
 			this.valueArr = getApp().globalData.valueArr //app.vue中应为[]
 			
+			if(getApp().globalData.firstLoading && getApp().globalData.deviceCoreData.writeCharacteristicId){ //同时满足初次加载，且有写数据id两个条件时执行
+				
+				getApp().writeValueToBle('f900',(str)=>{
+					getApp().handleStrFromBlueTooth(str)
+					if(getApp().globalData.isNewDevice && this.valueArr.length == this.deviceArr.length){
+						console.log("开始发送FA")
+						getApp().sendFA()
+					}
+				},null,()=>{ //f900发送成功才执行以下语句
+					// this.index_with_time = 0
+					this.showLoading = true //开启背景动画
+					// setTimeout(()=>{ //加入延时是防止页面没加载好就调用弹出层导致报错
+					// 	this.openWaitingPopup("加载设备","发起指令，正在等待结果")
+					// },200)
+					
+					getApp().globalData.firstLoading = false //再次点进来时，就不再重发f900
+					setTimeout(()=>{ //超时加载不到数据就执行
+						this.showLoading = false
+						if(this.deviceArr.length==0){ //长度为0，代表没获取到设备
+							// this.closeWaitingPopup("加载失败，未获取到数据") //传入true会显示是否重新加载的弹窗
+							uni.showToast({
+								icon:'none',
+								title:'加载失败'
+							})
+							// this.loadingOvertime()
+							getApp().globalData.firstLoading = true //下次进入时，会重发f900
+						}
+					},this.wait_time) 
+				})
+
+			}
+
+			
 			if(this.valueArr.length>0){ //有花括号数据时，获取电量
 				this.setElectric() 
 			}
-			// this.electric_timer = setInterval(()=>{ //每5分钟获取一次电量
-			// 	if(this.valueArr.length>0){
-			// 		this.setElectric() 
-			// 	}
-			// },3000000)
-
-		},
-		
-
-		onHide() {
-			// clearInterval(this.electric_timer) //清除更新电量的定时器
 			
+			//若有了数据，每次进入要更新图表
+			if(this.deviceArr[0]){
+				if(this.deviceArr[0].type!=1){ //单参数刷新图表
+					for(let i = 0;i<this.deviceArr.length;i++){
+						this.switchChart(i,this.lightOptions[i])
+					}
+				}else{ //多参数刷新图表
+					this.switchManyParamChart(this.manyParamLightOption)
+				}
+			}
+			
+
+
+
 		},
-		onPullDownRefresh() { //下拉后，重新加载数据
+
+		onPullDownRefresh() { //下拉重新加载数据
 			let that = this
 			uni.showModal({
 				content:that.$t("是否重新加载数据"),
 				success(res) {
 					uni.stopPullDownRefresh() //关闭下拉操作的顶部动画
 					if(res.confirm){
-						that.reloadData()
+						getApp().writeValueToBle('f900',(str)=>{
+							getApp().handleStrFromBlueTooth(str)
+							if(getApp().globalData.isNewDevice && that.valueArr.length == that.deviceArr.length){
+								console.log("开始发送FA")
+								getApp().sendFA()
+							}
+						},null,()=>{ //指令发送成功的额外操作，前面那个null代表失败的额外操作，不传不行
+							// that.index_with_time = 0 //数据清空了，重置带时间的value索引
+							that.showLoading = true //开启背景动画，用于显示加载状态
+							// that.openWaitingPopup("重新加载","正在重新加载设备")
+							getApp().globalData.firstLoading = false //30秒内重新点进首页时，不再重发f900
+							that.deviceArr = getApp().globalData.deviceArr = [] //清除数据，由于全局变量引用更改了，this的也要跟着变
+							that.valueArr = getApp().globalData.valueArr = []
+							getApp().globalData.addressToParamMap = []
+							// getApp().globalData.isFirstData = true
+							setTimeout(()=>{
+								that.showLoading = false
+								if(that.deviceArr.length==0){
+									// that.closeWaitingPopup("加载失败，未获取到数据")
+									uni.showToast({
+										icon:'none',
+										title:'加载失败'
+									})
+									getApp().globalData.firstLoading = true
+						
+								}
+							},that.wait_time) //30秒加载不到数据就自动关闭动画
+						})
 					}
 				}
 			})
@@ -311,45 +346,18 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 		
 		},
 		methods:{
+
 			loadingOvertime(){ //加载超时的操作
 				setTimeout(()=>{
 					uni.showToast({
 						icon:'none',
-						title:'加载超时，可尝试重新进入该页面'
+						title:'加载失败，可尝试重新进入该页面'
 					})
 				},1500) //弹窗动画关闭后半秒再弹出toast提示
 
 
 			},
-			reloadData(){ //用于下拉重新加载
-				this.reloadNum++
-				let that = this
-				
-				getApp().writeValueToBle(this.command,str=>{
-					getApp().handleStrFromBlueTooth(str)
-				},null,()=>{ //指令发送成功的额外操作，前面那个null代表失败的额外操作，不传不行
-					that.index_with_time = 0 //数据清空了，重置带时间的value索引
-					that.showLoading = true //开启背景动画，用于显示加载状态
-					that.openWaitingPopup("重新加载","正在重新加载设备")
-					getApp().globalData.firstLoading = false //30秒内重新点进首页时，不再重发f900
-					
-					getApp().globalData.deviceArr = [] //清除数据
-					getApp().globalData.valueArr = []
-					getApp().globalData.addressToParamMap = []
-					that.deviceArr = getApp().globalData.deviceArr //全局指向的引用更改了，this的也要跟着变
-					that.valueArr = getApp().globalData.valueArr 
-					
-					setTimeout(()=>{
-						that.showLoading = false
-						if(that.deviceArr.length==0){
-							that.closeWaitingPopup("加载失败，未获取到数据")
-							this.loadingOvertime()
-							getApp().globalData.firstLoading = true
 
-						}
-					},this.wait_time) //30秒加载不到数据就自动关闭动画
-				})
-			},
 			openWaitingPopup(title,content){
 				this.popup_title = title
 				this.popup_content = content
@@ -363,6 +371,7 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				},1000)
 			},
 			switchManyParamChart(index){
+				
 				this.manyParamLightOption = index
 				// let categories = []
 				let data = []
@@ -381,19 +390,6 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 						// categories.push(i)
 						data.push(value.values[index])
 						i++
-					}
-
-					//ORP可能是负的，如果切换到的是ORP，就把下限设为最小值
-					if((this.manyParamsConfig && getApp().globalData.manyParamCustomOptions[getApp().globalData.manyParamCustomOptions.indexOf(this.manyParamsConfig[index-1])]=="ORP")
-					|| (!this.manyParamsConfig && index==4)){
-						let min = Math.min.apply(null,data)
-						if(min<0){
-							let add = 5-Math.ceil(-min)%5
-							min = Math.floor(min)-add
-							this.optsArr[0].yAxis.data[0].min = min
-						}
-					}else{
-						this.optsArr[0].yAxis.data[0].min = 0
 					}
 					
 					if(this.manyParamsConfig){ //参数表手动修改过
@@ -419,25 +415,20 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 					  {
 						data: data,
 						textColor:'#aaa',
-						// name:name
+						name:'' //不设置这个name，就不会刷新折线图，具体原因未知
 					  }
 					]
 				}
-				this.alterChartMax(0)
+				
+				// this.alterChartMax(0)
 			},
 			open_alter_time_popup() {
 				this.$refs.popup.open()
 			},
-			/**
-			 * 点击取消按钮触发
-			 */
-			close_popup() {
+			close_popup() { //关闭修改时间的弹窗
 				this.$refs.popup.close()
 			},
-			/**
-			 * 点击确认按钮触发
-			 */
-			confirm_alter_time() {
+			confirm_alter_time() { //修改时间弹窗点击确定时触发
 				// 输入框的值
 				let interval = parseInt(this.interval_input)
 				let testTime = parseInt(this.testTime_input)
@@ -457,10 +448,8 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 						uni.showLoading({
 							title:this.$t('更改中')
 						})
-						
-						let count = 0
 						let alter_success = false //时间更改成功的标志
-						
+
 						setTimeout(()=>{
 							uni.hideLoading() //超时关闭加载
 							if(!alter_success){
@@ -469,30 +458,51 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 									icon:"none"
 								})
 							}
-						},10000)
+						},16000)
 						
-						getApp().writeValueToBle(msg,str=>{
-							if(count<this.deviceArr.length*2){
-								if(str.search("[OK]")!=-1){  //返回的数据带有[OK],表明时间修改成功
+						if(!getApp().globalData.isNewDevice){
+							let count = 0
+							getApp().writeValueToBle(msg,str=>{
+								if(count<this.deviceArr.length*2){
+									if(str.search("[OK]")!=-1){  //返回的数据带有[OK],表明时间修改成功
+										uni.hideLoading()  //主动关闭加载
+										uni.showToast({
+											title:this.$t("修改成功"),
+											icon:"none"
+										})
+										// getApp().globalData.isFirstData = true //时间修改成功后的第一条数据是带时间的
+										// this.index_with_time = this.valueArr.length
+										this.testTime = this.testTime_input
+										this.interval = this.interval_input
+										alter_success = true
+										//老设备在f900状态修改了时间，返回【OK】后会停止发数据,要重新发f900
+										getApp().writeValueToBle('F900',getApp().handleStrFromBlueTooth)
+									}
+									count++
+								}
+								//正常读取数据
+								getApp().handleStrFromBlueTooth(str)
+							})
+						}else{ //新设备要等FA发完数据再发其他指令，否则得不到响应
+							// this.breakCommand = msg
+							getApp().stopFAandSend(msg,(str)=>{
+								if(str == "[OK]"){ 
 									uni.hideLoading()  //主动关闭加载
 									uni.showToast({
 										title:this.$t("修改成功"),
 										icon:"none"
 									})
-									getApp().globalData.isFirstData = true //时间修改成功后的第一条数据是带时间的
-									this.index_with_time = this.valueArr.length
+									this.testTime = this.testTime_input
+									this.interval = this.interval_input
 									alter_success = true
 									
-									if(!getApp().globalData.isNewDevice){ //老设备在f900状态修改了时间，返回【OK】后会停止发数据,要重新发f900
-										getApp().writeValueToBle('F900',getApp().handleStrFromBlueTooth)
-									}
+									getApp().sendFA() 
 								}
-								count++
-							}
-							//正常读取数据
-							getApp().handleStrFromBlueTooth(str)
-							
-						})
+							})
+
+						}
+						
+
 
 						// 执行 close 才会关闭对话框
 						this.$refs.popup.close()
@@ -539,50 +549,14 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				// setTimeout(()=>{
 				// 	setInterval(()=>{
 				// 		getApp().globalData.valueArr.push(
-				// 			{temperature:23.5,values:[Math.round(100*Math.random()),Math.round(100*Math.random()),24.3,12.3,-3.1,2,3,32],electric:3.764}
+				// 			{temperature:23.5,values:[Math.round(100*Math.random()),Math.round(100*Math.random()),24.3,12.3,Math.round(-50*Math.random()),2,3,32],electric:3.764}
 				// 		)
 				// 	},3000)
 				// },1500)
 				
 
 			},
-			setChart(){
-				this.deviceArr.forEach((item,index)=>{  //遍历设备数组
-					if(index == this.deviceArr.length-1){
-						let itemArr
-						let categories = []
-						let series_data = []
-						let param_name
-						let i=1
-						let opts = JSON.parse(JSON.stringify(this.opts))
-						if(item.type == 1){ //多参数情况
-							opts.yAxis.data[0].title = '℃'
-							param_name = ''
-						}else{ //一般情况
-							param_name = this.paramArr[this.deviceArr[index].param]
 
-						}
-						
-						if(!(item.type ==0 && this.deviceArr[index].param==4)){ //单参数ORP不设0为下限
-							opts.yAxis.data[0].min = 0
-						}
-					
-						this.chartDataArr[index]={
-							categories: categories,
-							series: [
-							  {
-								data: series_data,
-								textColor:'#aaa',
-								name:param_name
-							  }
-							]
-						}
-						this.optsArr[index] = opts
-					}
-					
-				})
-			},
-			
 			setElectric(){
 				if(this.valueArr.length>0){
 					let electric = this.valueArr[this.valueArr.length-1].electric
@@ -651,10 +625,10 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 					tempArr = itemArr.map(item=>{return item.bod})
 					name = "BOD"
 				}
-				else{
+				else{ //type为0的情况，即化学参数
 					tempArr = itemArr.map(item=>{return item.value}) 
 					name = this.$t(this.paramArr[this.deviceArr[index].param]) 
-				} //type为0的情况，即化学参数
+				} 
 				
 				this.chartDataArr[index] = {
 					//categories和默认参数是一样的，不用设置
@@ -675,16 +649,10 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				this.open_alter_time_popup()
 			},
 			alterChartMax(index){ //动态修改折线图上限
+				if(this.deviceArr[index].param == 4){ //orp不作更改
+					return
+				}
 				let newData = this.chartDataArr[index].series[0].data
-				// if((this.deviceArr[index].type==0 && this.deviceArr[index].param==4) || 
-				// (this.deviceArr[index].type==1)&&( (this.manyParamsConfig?this.manyParamsConfig[this.manyParamLightOption-1]:this.originalManyParamsConfig[this.manyParamLightOption])=="ORP")){ //orp可以显示正数或负数，不做动态范围调整
-				// 	console.log("选到了ORP")
-				// 	let min = Math.min.apply(null,newData)
-				// 	console.log(min)
-				// 	if(min<0){
-				// 		this.optsArr[index].yAxis.data[0].max = min
-				// 	}
-				// }
 				let average = 0
 				for(let num of newData){
 					average+=num
@@ -701,8 +669,7 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				}
 				
 				//限制ph上限为15
-				if((this.deviceArr[index].type==1&& (this.manyParamsConfig?this.manyParamsConfig[this.manyParamLightOption-1]:this.originalManyParamsConfig[this.manyParamLightOption]))=='pH' 
-				|| (this.lightOptions[index]==0 && this.deviceArr[index].param == 3)){
+				if(this.deviceArr[index].param == 3){
 					if(chart_max>15 && max<=15){
 						chart_max = 15
 					}
@@ -721,21 +688,58 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 				console.log('deviceArr更新了')
 				if(this.deviceArr.length==1){
 					console.log('获取到第一个设备类型')
-					getApp().globalData.firstLoading = false //30后突然又加载到数据，重新进也不能发f900
+					getApp().globalData.firstLoading = false //若超时后才加载到数据，重新进也不能发f900
 					this.showLoading = false //获取到第一个传感器就关闭加载动画
-					this.closeWaitingPopup("成功获取设备类型")
+					// this.closeWaitingPopup("成功获取设备类型")
 				}
-				this.setChart()
+				this.deviceArr.forEach((item,index)=>{  //遍历设备数组
+					if(index == this.deviceArr.length-1){
+						let itemArr
+						let param_name
+						// let i=1
+						let opts = JSON.parse(JSON.stringify(this.opts))
+						if(item.type == 1){ //多参数情况
+							opts.yAxis.data[0].title = '℃'
+							param_name = ''
+						}else{ //一般情况
+							param_name = this.paramArr[this.deviceArr[index].param]
+				
+						}
+						
+						if(item.type == 0 && this.deviceArr[index].param!=4){ //单参数ORP或多参数不设0为下限
+							opts.yAxis.data[0].min = 0
+						}
+					
+						this.chartDataArr[index]={
+							categories: [],
+							series: [
+							  {
+								data: [],
+								textColor:'#aaa',
+								name:param_name
+							  }
+							]
+						}
+						this.optsArr[index] = opts
+					}
+					
+				})
 			},
 			valueArr(){ //valueArr加入新数据后，要对相应折线图的数据重新赋值
-				// console.log('valueArr发送了变化')
+		
+				// console.log('valueArr更新了')
 				if(this.homeConfig.waitFirstValue){ //如果等待花括号数据的加载动画还在显示，则关闭
 					this.homeConfig.waitFirstValue = false
 				}
 				if(this.valueArr.length % 10 == 1){ //从无到有的第一条，要设置一次电量,往后每10条重设一次电量
+					if(this.valueArr.length == 1){ //第一条设置时间
+						this.interval = this.valueArr[0].interval
+						this.testTime = this.valueArr[0].testTime
+					}
 					this.setElectric()
 				}
-				if(this.valueArr.length){ //接单参数的情况
+				
+				if(this.valueArr.length){ 
 
 					if(this.deviceArr[0] && this.deviceArr[0].type == 1){ //接多参数的情况,多参数的情况下设备列表只能有一支
 						//给多参数折线图chartdata赋值的逻辑写在这里
@@ -758,7 +762,7 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 								  }
 								]
 							}
-							this.alterChartMax(0)
+							// this.alterChartMax(0)
 						}
 					}else{ //接单参数的情况
 						let newValue = this.valueArr[this.valueArr.length-1]
@@ -786,8 +790,10 @@ import test from '../../uni_modules/uview-ui/libs/function/test';
 							  }
 							]
 						}
+						if(newValue.param!=4){ //插入新数据后，判断是否需要重新设置上下限。orp因为有正负两种情况，上下限用默认的
+							this.alterChartMax(index)
+						}
 						
-						this.alterChartMax(index)
 					}
 					
 				}

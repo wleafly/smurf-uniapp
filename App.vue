@@ -19,7 +19,6 @@
 		},
 		globalData:{
 			autoDownload:false,//是否自动下载实时数据
-			onlyOneSensor:false,//是否识别到单只传感器就收手，只对新版有效
 			deviceName:"", //蓝精灵的名字
 			deviceArr:[], //存传感器的类型
 			valueArr:[], //存传感器的数据
@@ -47,7 +46,10 @@
 			includeParamArr:[], //历史数据页包含的参数
 			normalValueArr:[],//历史数据页常规参数值数据
 			manyParamValueArr:[],//历史数据页多参数值数据
+			isContinue:true, //是否支持继续发送FA，新设备有效
 			
+			canSaveData:true,
+			saveDataCount:0, //用于记录新设备本次连接保存的记录条数，如果设置了下载间隔，可依据saveDataCount是否被传感器数量的倍数整除判断要不要将canSaveData置为false
 			// deviceArr:[
 			// 	{
 			// 		address:3,
@@ -71,7 +73,7 @@
 			// 	{
 			// 		address:6,
 			// 		type:0,
-			// 		param:6
+			// 		param:3
 			// 	},
 			// 	{
 			// 		address:16,
@@ -93,6 +95,46 @@
 
 		},
 		methods:{
+			stopFAandSend(msg,handleStr){
+				getApp().globalData.isContinue = false //停止FA的运行
+				this.waitAndCircleSend(3,msg,handleStr)
+				
+			},
+			waitAndCircleSend(count,msg,handleStr){ //count是重复次数
+				let currentLen = getApp().globalData.valueArr.length
+				setTimeout(()=>{
+					if(currentLen==getApp().globalData.valueArr.length){ //没有数据，说明FA结束，可以开始发送其他指令
+						getApp().globalData.isContinue = true //指令成功发送后，对FA的限制也就要解除了
+						this.writeValueToBle(msg,handleStr)
+					}else{ //说明此段时间有新数据接收，FA还在运作
+						if(--count==0){
+							console.log('FA未停止，终止递归')
+							uni.showToast({
+								icon:'none',
+								title:'FA未停止，指令发送失败'
+							})
+							getApp().globalData.isContinue = true //指令成功失败，对FA的限制照样要解除
+							return;
+						}
+						this.waitAndCircleSend(count,msg,handleStr);
+					}
+				},5000)
+			},
+			sendFA(){ //递归发送FA，新设备F900只有一组数据，为了持续接收实时数据会用到
+				
+				let currentLen = getApp().globalData.valueArr.length
+				if(currentLen>0){ //valueArr不为空才能执行FA
+					getApp().writeValueToBle('FA',(str)=>{
+						getApp().handleStrFromBlueTooth(str)
+						if(getApp().globalData.valueArr.length - currentLen == getApp().globalData.deviceArr.length){  //新增的数据长度达到设备数量，说明FA数据接收完毕，发起下一组
+							if(getApp().globalData.isContinue){
+								this.sendFA()
+							}
+						}
+					})
+				}
+
+			},
 			// ArrayBuffer转16进制字符串
 			ab2hex(buffer) {
 			    const hexArr = Array.prototype.map.call(
@@ -121,6 +163,9 @@
 			    return resultStr.join("");
 			},
 			writeValueToBle(msg,handleStr,failOperation,successOperation){
+				if(msg=='f900'||msg=='F900'){
+					getApp().globalData.isFirstData = true //此标志用于判断新老设备和获取时间
+				}
 				let that = this
 				// console.log(that.$t('连接'))
 				var typedArray = new Uint8Array(msg.match(/[\da-f]{2}/gi).map(function (h) {return parseInt(h, 16)}))
@@ -178,7 +223,6 @@
 			},
 			handleStrFromBlueTooth(result){
 				console.log("收到数据:"+result)
-				result = result.replace(",,",",") //处理固件升级造成的连续逗号bug
 				if(result.charAt(0)=='[' && result.search(",")!=-1){ //[6,0,6,]格式的设备类型
 					result = result.slice(1,result.length-1)
 					let resultArr = result.split(',')
@@ -189,7 +233,7 @@
 						type:parseInt(resultArr[1]),
 						param:parseInt(resultArr[2]),
 					}
-					//地址不同时才能push新设备，同时防止重复元素
+					//地址不同时才能push新设备，防止重复元素
 					if(getApp().globalData.deviceArr.findIndex((item)=>{return item.address==device.address})==-1){
 						getApp().globalData.deviceArr.push(device)
 						getApp().globalData.addressToParamMap[parseInt(resultArr[0])] = parseInt(resultArr[2]) //在数组中添加地址和参数id的映射关系
@@ -208,12 +252,9 @@
 						console.log("接收到了后半截数据带[OK]或[Error]的情况") 
 						result = result.split("[")[0]
 					}
-					
 					getApp().globalData.tempStr = getApp().globalData.tempStr + result
 					getApp().globalData.tempStr = getApp().globalData.tempStr.slice(1,getApp().globalData.tempStr.length-2).split(',') //silce是左闭右开，length-2可以移除掉最后面的,}
-			
 					console.log("处理后的数据:",getApp().globalData.tempStr)
-					
 					if(getApp().globalData.deviceArr.length>0){
 						this.judgeNewOrOld()
 						this.storageValue(getApp().globalData.tempStr.map(Number)) //.map(Number)可以将字符串数组转为数字类型的数组
@@ -228,9 +269,6 @@
 						this.storageValue(getApp().globalData.tempStr.map(Number))
 					}
 				}
-				
-
-					
 			},
 			judgeNewOrOld(){  //判断是新设备还是老设备，由于新设备修改了广播包，已废弃
 				
@@ -241,6 +279,9 @@
 					// console.log()
 					if(deviceArr.length>1){ //能接多个传感器，必定是新设备
 						getApp().globalData.isNewDevice = true 
+					}else if(deviceArr[0].type == 1){ //多参数实时数据格式一样，不判断新旧
+						console.log("多参数，无法通过实时数据长度判断新旧")
+						return
 					}else{
 						if(getApp().globalData.tempStr.length==6||getApp().globalData.tempStr.length==8){
 							getApp().globalData.isNewDevice = true
@@ -284,7 +325,7 @@
 							record = { 
 								address:numArr[0],
 								param:param,
-								value:numArr[1],
+								value:numArr[1]<-32768?(numArr[1]+65536):(numArr[1]>32768?(numArr[1]-65536):numArr[1]),
 								electric:numArr[2]
 							}
 						}
@@ -318,7 +359,7 @@
 							numArr[2], //cod浊度
 							numArr[3], //电导率
 							numArr[4], //PH
-							numArr[5], //ORP
+							numArr[5]>32768?numArr[5]-65536:numArr[5], //ORP
 							numArr[6], //溶解氧
 							numArr[7], //NHN
 							numArr[8], //浊度
@@ -340,9 +381,28 @@
 				getApp().globalData.valueArr.push(record)
 				
 				//如果开启了自动下载实时数据，此处还要更新缓存中的数据
-				if(getApp().globalData.autoDownload){
+				if(getApp().globalData.autoDownload && getApp().globalData.canSaveData){
 					record.createTime = getDateTime.dateTimeStr('y-m-d h:i:s')
 					this.addStorageRecord(record)
+					let minute = uni.getStorageSync("saveInterval") || 0 //获取下载间隔，单位为分钟
+					if(minute>0){
+						if(getApp().globalData.isNewDevice){ //新设备可能接多支，需保证每次存储能把各类传感器存一遍
+							getApp().globalData.saveDataCount ++;
+							if(getApp().globalData.saveDataCount % getApp().globalData.deviceArr.length == 0){
+								getApp().globalData.canSaveData = false
+								setTimeout(()=>{
+									getApp().globalData.canSaveData = true
+								},minute*60000)
+							}
+						}else{
+							getApp().globalData.canSaveData = false
+							setTimeout(()=>{
+								getApp().globalData.canSaveData = true
+							},minute*60000)
+						}
+						
+					}
+					
 				}
 				
 			},

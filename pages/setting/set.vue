@@ -4,13 +4,12 @@
 			<view>{{$t('实时数据自动下载')}}</view>
 			<switch :checked="autoDownload" @change="autoDownloadSwitchChange"></switch>
 		</view>
-		<view class="picker_box" style="flex-direction: column;align-items: flex-start;">
-			<view style="display: flex;justify-content: space-between;width: 100%;align-items: center;">
-				<view>{{$t('识别单只传感器')}}</view>
-				<switch :checked="onlyOneSensor" @change="onlyOneSensorSwitchChange"></switch>
-			</view>
-			<view style="color: gray;font-size: 25rpx;margin-top: 20rpx;">只需识别一支传感器时，开启此项可提升加载速度</view>
+		<view class="picker_box" v-if="autoDownload" @click="setSaveIntervel()">
+			<view>下载最短间隔</view>
+			<view style="color: dimgray;display: flex;align-items: center;">
+				{{saveInterval}} min</view>
 		</view>
+
 		<view style="background-color: white;border-radius: 30rpx;padding: 30rpx;margin: 30rpx;">
 			<view style="font-size: 35rpx;">{{$t('多参数配置')}}</view>
 			
@@ -35,13 +34,31 @@
 		data() {
 			return {
 				autoDownload:null,
-				onlyOneSensor:null,
+				saveInterval:0,
 				localArr:[],
 				codCanSelect:['COD','未连接'],
 				canSelectParamArr:[]
 			}
 		},
 		methods: {
+			setSaveIntervel(){
+				let that = this
+				uni.showModal({
+					title: "间隔设置",
+					editable: true,
+					placeholderText: "请输入0~60之间的数",
+					success(res){
+						if(res.confirm){
+							let time = parseInt(res.content)
+							if(time>=0 && time<=60){
+								that.saveInterval = time
+								uni.setStorageSync("saveInterval",time)
+								getApp().globalData.canSaveData = true
+							}
+						}
+					}
+				})
+			},
 			storageConfig(){
 				console.log("保存多参数配置")
 				uni.setStorageSync("manyParamsConfig",this.localArr)
@@ -57,17 +74,9 @@
 			autoDownloadSwitchChange(e){
 				uni.setStorageSync("autoDownload",e.detail.value)
 				getApp().globalData.autoDownload = e.detail.value 
-				
+				this.autoDownload = getApp().globalData.autoDownload
 			},
-			onlyOneSensorSwitchChange(e){
-				if(e.detail.value){
-					uni.showModal({
-						content:"仅供测试版使用，旧版本EXO-mini1请关闭该模式"
-					})
-				}
-				uni.setStorageSync("onlyOneSensor",e.detail.value)
-				getApp().globalData.onlyOneSensor = e.detail.value 
-			},
+
 			bindPickerChange(index,e){
 				if(index == 0){
 					this.$set(this.localArr,0,this.codCanSelect[e.detail.value])
@@ -84,8 +93,8 @@
 		},
 		onShow() {
 			let arr = uni.getStorageSync("manyParamsConfig") || getApp().globalData.manyParamsDefalut
+			this.saveInterval = uni.getStorageSync("saveInterval") || 0
 			this.localArr = arr
-			
 		},
 
 	}
